@@ -20,7 +20,7 @@ export const LISTA_DIRECS = [
   { id: "16ª DIREC", sede: "João Câmara", cor: "#485778" },
 ];
 
-function LegendaDirec() {
+function LegendaDirec({ onSelectDirec, direcSelecionada }) {
   const [aberto, setAberto] = useState(true);
 
   return (
@@ -29,23 +29,22 @@ function LegendaDirec() {
         position: "absolute",
         top: "20px",
         right: "20px",
-        zIndex: 1000, // Garante que a legenda fique acima do mapa
+        zIndex: 1000,
         backgroundColor: "rgba(255, 255, 255, 0.95)",
         padding: "12px 16px",
         borderRadius: "8px",
         boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.25)",
         fontFamily: "sans-serif",
         maxHeight: "80vh",
-        width: aberto ? "240px" : "auto",
+        width: aberto ? "250px" : "auto",
         display: "flex",
         flexDirection: "column",
         transition: "all 0.3s ease",
       }}
-      // Impede que cliques e scrolls na legenda façam zoom ou movam o mapa atrás
       onMouseDown={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      {/* Cabeçalho da Legenda com Botão de Minimizar */}
+      {/* Cabeçalho retrátil */}
       <div
         style={{
           display: "flex",
@@ -80,36 +79,47 @@ function LegendaDirec() {
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
+            gap: "6px",
             paddingRight: "4px",
           }}
         >
-          {LISTA_DIRECS.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                fontSize: "12px",
-                color: "#444",
-              }}
-            >
-              <span
+          {LISTA_DIRECS.map((item) => {
+            const estaAtiva = direcSelecionada === item.cor;
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => onSelectDirec && onSelectDirec(item)}
                 style={{
-                  width: "14px",
-                  height: "14px",
-                  backgroundColor: item.cor,
-                  borderRadius: "3px",
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "12px",
+                  color: "#333",
+                  padding: "6px 8px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  backgroundColor: estaAtiva ? "rgba(0, 0, 0, 0.08)" : "transparent",
+                  fontWeight: estaAtiva ? "bold" : "normal",
+                  transition: "background 0.2s ease",
                 }}
-              />
-              <span>
-                <strong>{item.id}</strong> ({item.sede})
-              </span>
-            </div>
-          ))}
+              >
+                <span
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: item.cor,
+                    borderRadius: "3px",
+                    border: "1px solid rgba(0,0,0,0.2)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span>
+                  {item.id} ({item.sede})
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
