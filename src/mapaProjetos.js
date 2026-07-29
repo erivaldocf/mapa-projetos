@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, ZoomControl, useMap } from "react-leaflet";
 import Papa from "papaparse";
 import "leaflet/dist/leaflet.css";
@@ -41,7 +41,7 @@ export const AREAS_CONHECIMENTO = [
   "Ciências Humanas",
 ];
 
-// Lista de Componentes Curriculares (Estrutura aberta para inclusão futura dos EPTs)
+// Lista de Componentes Curriculares
 export const COMPONENTES_CURRICULARES = [
   "Língua Portuguesa",
   "Matemática",
@@ -95,6 +95,7 @@ function MapaProjetos() {
   // Estados de Seleção, Foco e Filtro
   const [direcSelecionada, setDirecSelecionada] = useState(null);
   const [focoMunicipio, setFocoMunicipio] = useState(null);
+  const [municipioClicadoNome, setMunicipioClicadoNome] = useState(null);
   const [municipioInfo, setMunicipioInfo] = useState(null);
   const [etapasSelecionadas, setEtapasSelecionadas] = useState([]);
   const [modalidadesSelecionadas, setModalidadesSelecionadas] = useState([]);
@@ -104,6 +105,15 @@ function MapaProjetos() {
   
   // Estado para controlar a exibição dos detalhes do projeto na coluna esquerda
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
+
+  // Referências sincronizadas para evitar stale closures nos eventos do Leaflet
+  const direcRef = useRef(direcSelecionada);
+  const municipioNomeRef = useRef(municipioClicadoNome);
+
+  useEffect(() => {
+    direcRef.current = direcSelecionada;
+    municipioNomeRef.current = municipioClicadoNome;
+  }, [direcSelecionada, municipioClicadoNome]);
 
   const URL_ESCOLAS_CSV =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSy5iLlbtrxjoKlraHw-2G30n7RbBjkQg20Kp0xsT6yWZRt810McLpE78xboZqthPkjsUbosc87jajg/pub?gid=882632808&single=true&output=csv";
@@ -267,7 +277,7 @@ function MapaProjetos() {
         color: "#ffffff",
         weight: 1,
         fillColor: corDirec,
-        fillOpacity: 0.6,
+        fillOpacity: 0.85,
       };
     }
 
@@ -294,10 +304,12 @@ function MapaProjetos() {
     if (direcSelecionada === direcItem.cor) {
       setDirecSelecionada(null);
       setFocoMunicipio(null);
+      setMunicipioClicadoNome(null);
       setMunicipioInfo(null);
     } else {
       setDirecSelecionada(direcItem.cor);
       setFocoMunicipio(null);
+      setMunicipioClicadoNome(null);
       setMunicipioInfo({
         nome: `${direcItem.id} - Sede: ${direcItem.sede}`,
         cor: direcItem.cor,
@@ -352,6 +364,18 @@ function MapaProjetos() {
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", display: "flex", flexDirection: "row", overflow: "hidden" }}>
       <style>{`
+        /* Estilização limpa e legível dos rótulos dos municípios */
+        .rotulo-municipio-destacado {
+          background: rgba(255, 255, 255, 0.9) !important;
+          border: 1px solid #0f172a !important;
+          border-radius: 4px !important;
+          color: #0f172a !important;
+          font-weight: 700 !important;
+          font-size: 10px !important;
+          padding: 2px 6px !important;
+          box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2) !important;
+        }
+
         .painel-superior-direito-row {
           position: absolute !important;
           top: 15px !important;
@@ -385,7 +409,7 @@ function MapaProjetos() {
         }
       `}</style>
 
-      {/* 📌 BARRA LATERAL ESQUERDA - DETALHES DO PROJETO SELECIONADO */}
+      {/* BARRA LATERAL ESQUERDA - DETALHES DO PROJETO SELECIONADO */}
       {projetoSelecionado && (
         <div className="coluna-detalhes-esquerda">
           <div style={{ padding: "16px", backgroundColor: "#0f172a", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -711,6 +735,7 @@ function MapaProjetos() {
                 onClick={() => {
                   setDirecSelecionada(null);
                   setFocoMunicipio(null);
+                  setMunicipioClicadoNome(null);
                   setMunicipioInfo(null);
                 }}
                 style={{
@@ -740,15 +765,19 @@ function MapaProjetos() {
           <ZoomControl position="bottomleft" />
           <ControladorDeFoco direcSelecionada={direcSelecionada} focoMunicipio={focoMunicipio} />
 
+          {/* MAPA BASE LIMPO E NÍTIDO */}
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-            attribution="&copy; CARTO &copy; OpenStreetMap"
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
+            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> &copy; <a href='https://carto.com/attributions'>CARTO</a>"
           />
 
           {geoJsonRN && (
             <GeoJSON
               key={
                 (direcSelecionada || "todas") +
+                "_" +
+                (municipioClicadoNome || "nenhum") +
+                "_" +
                 (geoJsonRN.features?.length || "geojson")
               }
               data={geoJsonRN}
@@ -760,29 +789,45 @@ function MapaProjetos() {
                   "Município";
                 const corDirec = obterCorDirec(nomeMun);
 
-                layer.bindTooltip(nomeMun, { sticky: true });
+                layer.bindTooltip(nomeMun, {
+                  sticky: true,
+                  direction: "auto",
+                  className: "rotulo-municipio-destacado",
+                });
 
                 layer.on({
                   mouseover: (e) => {
-                    e.target.setStyle({ weight: 2.5, fillOpacity: 0.9 });
+                    e.target.setStyle({ weight: 2.5, fillOpacity: 0.95 });
                   },
                   mouseout: (e) => {
                     e.target.setStyle(getEstiloMunicipio(feature));
                   },
                   click: (e) => {
                     const centro = e.target.getBounds().getCenter();
+                    const direcAtual = direcRef.current;
+                    const munAtual = municipioNomeRef.current;
 
-                    if (direcSelecionada === corDirec && corDirec) {
-                      // Segundo clique no mesmo território regional: ativa aproximação no município (zoom 11.5)
+                    // 3º Clique: Se o município clicado já for o município com foco ativo, reseta o mapa para a visão original
+                    if (munAtual === nomeMun) {
+                      setDirecSelecionada(null);
+                      setFocoMunicipio(null);
+                      setMunicipioInfo(null);
+                      setMunicipioClicadoNome(null);
+                    } 
+                    // 2º Clique: Se a DIREC já estiver ativa, aproxima no município
+                    else if (direcAtual === corDirec && corDirec) {
                       setFocoMunicipio({ lat: centro.lat, lng: centro.lng });
+                      setMunicipioClicadoNome(nomeMun);
                       setMunicipioInfo({
                         nome: `Município: ${nomeMun}`,
                         cor: corDirec || "#0284c7",
                       });
-                    } else {
-                      // Primeiro clique: seleciona e aproxima para a DIREC correspondente (zoom 10.5)
+                    } 
+                    // 1º Clique: Seleciona e aproxima para a regional (DIREC)
+                    else {
                       setDirecSelecionada(corDirec);
                       setFocoMunicipio(null);
+                      setMunicipioClicadoNome(null);
                       setMunicipioInfo({
                         nome: `DIREC: ${corDirec || "Regional"} (${nomeMun})`,
                         cor: corDirec || "#0284c7",
@@ -796,7 +841,7 @@ function MapaProjetos() {
 
           {projetosFiltrados.map((item, index) => (
             <Marker 
-              key={index} 
+              key={`${item.lat}-${item.lng}-${index}`} 
               position={[item.lat, item.lng]}
               eventHandlers={{
                 click: () => {
