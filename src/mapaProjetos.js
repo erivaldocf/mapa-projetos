@@ -41,7 +41,6 @@ export const AREAS_CONHECIMENTO = [
   "Ciências Humanas",
 ];
 
-// Lista de Componentes Curriculares
 export const COMPONENTES_CURRICULARES = [
   "Língua Portuguesa",
   "Matemática",
@@ -59,11 +58,83 @@ export const COMPONENTES_CURRICULARES = [
   "Sociologia",
 ];
 
-// Componente auxiliar interno para gerenciar o efeito flyTo com hierarquia: Município (11.5) > DIREC (10.5) > Estado (8)
-function ControladorDeFoco({ direcSelecionada, focoMunicipio }) {
+// Mapeamento das cores das DIRECs por município
+const CORES_DIREC = {
+  NATAL: "#41909A", EXTREMOZ: "#41909A", MACAIBA: "#41909A", SAOGONCALODOAMARANTE: "#41909A",
+  ARES: "#8D4170", BAIAFORMOSA: "#8D4170", CANGUARETAMA: "#8D4170", GOIANINHA: "#8D4170",
+  MONTEALEGRE: "#8D4170", NISIAFLORESTA: "#8D4170", PARNAMIRIM: "#8D4170",
+  SAOJOSEADEMIPIBU: "#8D4170", SAOJOSEDEMIPIBU: "#8D4170", SENADORGEORGINOAVELINO: "#8D4170",
+  TIBAUDOSUL: "#8D4170", VERACRUZ: "#8D4170", VILAFLOR: "#8D4170",
+  BOASAUDE: "#B7DCCA", JANUARIOCICCO: "#B7DCCA", BREJINHO: "#B7DCCA", ESPIRITOSANTO: "#B7DCCA",
+  JUNDIA: "#B7DCCA", LAGOADANTA: "#B7DCCA", LAGOADEDANTAS: "#B7DCCA", LAGOADEPEDRAS: "#B7DCCA",
+  LAGOASALGADA: "#B7DCCA", MONTANHAS: "#B7DCCA", MONTEDASGAMELEIRAS: "#B7DCCA", NOVACRUZ: "#B7DCCA",
+  PASSAEFICA: "#B7DCCA", PASSAGEM: "#B7DCCA", PEDROVELHO: "#B7DCCA", SANTOANTONIO: "#B7DCCA",
+  SAOJOSEDOCAMPESTRE: "#B7DCCA", SERRADESAOBENTO: "#B7DCCA", SERRINHA: "#B7DCCA", VARZEA: "#B7DCCA",
+  BARCELONA: "#98956C", BOMJESUS: "#98956C", CAICARADORIODOVENTO: "#98956C", IELMOMARINHO: "#98956C",
+  LAGOADEVELHOS: "#98956C", RIACHUELO: "#98956C", RUYBARBOSA: "#98956C", SANTAMARIA: "#98956C",
+  SAOPAULODOPOTENGI: "#98956C", SAOPEDRO: "#98956C", SAOTOME: "#98956C", SENADORELOIDESOUZA: "#98956C",
+  SERRACAIADA: "#98956C", PRESIDENTEJUSCELINO: "#98956C",
+  CEARAMIRIM: "#FFF99C", MAXARANGUAPE: "#FFF99C", PUREZA: "#FFF99C", RIODOFOGO: "#FFF99C",
+  SAOMIGUELDOGOSTOSO: "#FFF99C", TAIPU: "#FFF99C", TOUROS: "#FFF99C",
+  ALTODORODRIGUES: "#7A7198", GALINHOS: "#7A7198", GUAMARE: "#7A7198", MACAU: "#7A7198",
+  PENDENCIAS: "#7A7198", PORTODOMANGUE: "#7A7198",
+  CAMPOREDONDO: "#E87878", CORONELEZEQUIEL: "#E87878", JACANA: "#E87878", JAPI: "#E87878",
+  LAJESPINTADAS: "#E87878", SANTACRUZ: "#E87878", SAOBENTODOTRAIRI: "#E87878", SITIONOVO: "#E87878", TANGARA: "#E87878",
+  AFONSOBEZERRA: "#97AEBE", ANGICOS: "#97AEBE", BODO: "#97AEBE", BODOBO: "#97AEBE",
+  FERNANDOPEDROZA: "#97AEBE", LAJES: "#97AEBE", PEDROAVELINO: "#97AEBE", SANTANADOMATOS: "#97AEBE",
+  ACARI: "#87C127", CARNAUBADOSDANTAS: "#87C127", CERROCORA: "#87C127", CRUZETA: "#87C127",
+  CURRAISNOVOS: "#87C127", EQUADOR: "#87C127", FLORANIA: "#87C127", LAGOANOVA: "#87C127",
+  PARELHAS: "#87C127", SANTANADOSERIDO: "#87C127", SAOVICENTE: "#87C127", TENENTELAURENTINOCRUZ: "#87C127",
+  CAICO: "#007CC2", IPUEIRA: "#007CC2", JARDIMDEPIRANHAS: "#007CC2", JARDIMDOSERIDO: "#007CC2",
+  JUCURUTU: "#007CC2", OUROBRANCO: "#007CC2", SAOFERNANDO: "#007CC2", SAOJOAODOSABUGI: "#007CC2",
+  SAOJOSEDADOSERIDO: "#007CC2", SAOJOSEDOSERIDO: "#007CC2", SERRANEGRADONORTE: "#007CC2", TIMBAUBADOSBATISTAS: "#007CC2",
+  ACU: "#DA251D", ASSU: "#DA251D", CAMPOGRANDE: "#DA251D", CARNAUBAIS: "#DA251D",
+  IPANGUACU: "#DA251D", ITAJA: "#DA251D", PARAU: "#DA251D", SAORAFAEL: "#DA251D",
+  TRIUNFOPOTIGUAR: "#DA251D", AUGUSTOSEVERO: "#DA251D",
+  AREIABRANCA: "#FFF420", BARAUNA: "#FFF420", GOVERNADORDIXSEPTROSADO: "#FFF420",
+  GROSSOS: "#FFF420", MOSSORO: "#FFF420", SERRADOMEL: "#FFF420", TIBAU: "#FFF420", UPANEMA: "#FFF420",
+  APODI: "#E77917", CARAUBAS: "#E77917", FELIPEGUERRA: "#E77917", ITAU: "#E77917",
+  RODOLFOFERNANDES: "#E77917", SEVERIANOMELO: "#E77917", TABOLEIROGRANDE: "#E77917",
+  ALMINOAFONSO: "#DEDEDC", ANTONIOMARTINS: "#DEDEDC", FRUTUOSOGOMES: "#DEDEDC", JANDUIS: "#DEDEDC",
+  JOAODIAS: "#DEDEDC", LUCRECIA: "#DEDEDC", MARTINS: "#DEDEDC", MESSIASTARGINO: "#DEDEDC",
+  OLHODAGUADOSBORGES: "#DEDEDC", PATU: "#DEDEDC", RAFAELGODEIRO: "#DEDEDC", RIACHODACRUZ: "#DEDEDC",
+  SERRINHADOSPINTOS: "#DEDEDC", UMARIZAL: "#DEDEDC", VICOSA: "#DEDEDC",
+  AGUANOVA: "#01923F", ALEXANDRIA: "#01923F", CORONELJOAOPESSOA: "#01923F", DOUTORSEVERIANO: "#01923F",
+  ENCANTO: "#01923F", FRANCISCODANTAS: "#01923F", JOSEDAPENHA: "#01923F", LUISGOMES: "#01923F",
+  MAJORSALES: "#01923F", MARCELINOVIEIRA: "#01923F", PARANA: "#01923F", PAUDOSFERROS: "#01923F",
+  PILOES: "#01923F", PORTALEGRE: "#01923F", RAFAELFERNANDES: "#01923F", RIACHODESANTANA: "#01923F",
+  SAOFRANCISCODOOESTE: "#01923F", SAOMIGUEL: "#01923F", TENENTEANANIAS: "#01923F", VENHAVER: "#01923F",
+  BENTOFERNANDES: "#485778", CAICARADONORTE: "#485778", JANDAIRA: "#485778", JARDIMDEANGICOS: "#485778",
+  JOAOCAMARA: "#485778", PARAZINHO: "#485778", PEDRAGRANDE: "#485778", PEDRAPRETA: "#485778",
+  POCOBRANCO: "#485778", SAOBENTODONORTE: "#485778",
+};
+
+// Funções utilitárias
+const normalizarTexto = (texto) => {
+  return texto
+    ? String(texto)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase()
+        .trim()
+    : "";
+};
+
+const obterCorDirec = (nomeBruto) => {
+  const nomeLimpo = normalizarTexto(nomeBruto);
+  return CORES_DIREC[nomeLimpo] || null;
+};
+
+// Componente auxiliar para ajustar o foco do mapa
+function ControladorDeFoco({ direcSelecionada, focoMunicipio, projetoSelecionado }) {
   const map = useMap();
 
   useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+
     if (focoMunicipio) {
       map.flyTo([focoMunicipio.lat, focoMunicipio.lng], 11.5, {
         animate: true,
@@ -83,7 +154,7 @@ function ControladorDeFoco({ direcSelecionada, focoMunicipio }) {
         duration: 1.2,
       });
     }
-  }, [direcSelecionada, focoMunicipio, map]);
+  }, [direcSelecionada, focoMunicipio, projetoSelecionado, map]);
 
   return null;
 }
@@ -103,10 +174,8 @@ function MapaProjetos() {
   const [componentesSelecionados, setComponentesSelecionados] = useState([]);
   const [painelFiltrosAberto, setPainelFiltrosAberto] = useState(true);
   
-  // Estado para controlar a exibição dos detalhes do projeto na coluna esquerda
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
-  // Referências sincronizadas para evitar stale closures nos eventos do Leaflet
   const direcRef = useRef(direcSelecionada);
   const municipioNomeRef = useRef(municipioClicadoNome);
 
@@ -144,43 +213,67 @@ function MapaProjetos() {
 
         const listaFinal = projetosData
           .map((projeto) => {
-            const inepProjeto = projeto["INEP da Escola"] || projeto["INEP"];
+            const chaveInepProj = Object.keys(projeto).find(k => k.trim().toUpperCase().includes("INEP")) || "";
+            const inepProjeto = projeto[chaveInepProj] || projeto["INEP da Escola"] || projeto["INEP"];
+            
             if (!inepProjeto) return null;
 
             const escolaEncontrada = escolasData.find((escola) => {
-              const inepEscola =
-                escola["INEP"] || escola["inep"] || escola["Código INEP"] || Object.values(escola)[0];
+              const chaveInepEscola = Object.keys(escola).find(k => k.trim().toUpperCase().includes("INEP")) || "";
+              const inepEscola = escola[chaveInepEscola] || escola["INEP"] || Object.values(escola)[0];
               return String(inepEscola).trim() === String(inepProjeto).trim();
             });
 
             if (escolaEncontrada) {
-              const coordString =
-                escolaEncontrada["Coordenadas"] ||
-                escolaEncontrada["Coordenada"] ||
-                escolaEncontrada["COORDENADAS"] ||
-                Object.values(escolaEncontrada)[6];
+              const chaveCoord = Object.keys(escolaEncontrada).find(k => k.trim().toUpperCase().includes("COORD")) || "";
+              const coordString = escolaEncontrada[chaveCoord] || escolaEncontrada["Coordenadas"] || Object.values(escolaEncontrada)[6];
 
-              if (coordString && coordString.includes(",")) {
-                const [lat, lng] = coordString
+              if (coordString && String(coordString).includes(",")) {
+                const [lat, lng] = String(coordString)
                   .split(",")
                   .map((coord) => parseFloat(coord.trim()));
 
                 if (!isNaN(lat) && !isNaN(lng)) {
-                  const nomeEscola =
-                    escolaEncontrada["Nome"] ||
-                    escolaEncontrada["NOME DA ESCOLA"] ||
-                    escolaEncontrada["Escola"] ||
-                    `Escola INEP ${inepProjeto}`;
+                  const chaveNomeEscola = Object.keys(escolaEncontrada).find(k => k.trim().toUpperCase().includes("NOME")) || "";
+                  const nomeEscola = escolaEncontrada[chaveNomeEscola] || escolaEncontrada["Nome"] || `Escola INEP ${inepProjeto}`;
+
+                  const chaveMunEscola = Object.keys(escolaEncontrada).find(k => k.trim().toUpperCase().includes("MUNICIPIO") || k.trim().toUpperCase().includes("MUNICÍPIO")) || "";
+                  const chaveMunProj = Object.keys(projeto).find(k => k.trim().toUpperCase().includes("MUNICIPIO") || k.trim().toUpperCase().includes("MUNICÍPIO")) || "";
+                  const nomeMunicipio = escolaEncontrada[chaveMunEscola] || projeto[chaveMunProj] || "";
+
+                  const obterValorFlexivel = (obj, termos) => {
+                    const chave = Object.keys(obj).find(k => 
+                      termos.some(t => k.trim().toUpperCase().includes(t.toUpperCase()))
+                    );
+                    if (chave && obj[chave]) return String(obj[chave]);
+
+                    const valorEncontrado = Object.values(obj).find(v => {
+                      if (!v) return false;
+                      const normV = normalizarTexto(v);
+                      return termos.some(t => normV.includes(t.toUpperCase()));
+                    });
+                    return valorEncontrado ? String(valorEncontrado) : "";
+                  };
+
+                  const etapaVal = obterValorFlexivel(projeto, ["ETAPA", "SERIE", "ANO"]);
+                  const modalidadeVal = obterValorFlexivel(projeto, ["MODALIDADE", "MODAL"]);
+                  const areaVal = obterValorFlexivel(projeto, ["AREA", "ÁREA"]);
+                  const componenteVal = obterValorFlexivel(projeto, ["COMPONENTE", "DISCIPLINA", "MATERIA"]);
 
                   return {
+                    ...escolaEncontrada,
                     ...projeto,
                     nomeEscola: nomeEscola,
-                    etapa: projeto["Etapa de Ensino"] || projeto["Etapa"] || "",
-                    modalidade: projeto["Modalidade de Ensino"] || projeto["Modalidade"] || "",
-                    area: projeto["Área de Conhecimento"] || projeto["Area de Conhecimento"] || projeto["Área"] || projeto["Area"] || "",
-                    componente: projeto["Componente Curricular"] || projeto["Componente"] || projeto["Disciplina"] || "",
+                    municipio: nomeMunicipio,
+                    corDirec: obterCorDirec(nomeMunicipio),
+                    etapa: etapaVal,
+                    modalidade: modalidadeVal,
+                    area: areaVal,
+                    componente: componenteVal,
                     lat: lat,
                     lng: lng,
+                    dadosCompletosEscola: escolaEncontrada,
+                    dadosCompletosProjeto: projeto,
                   };
                 }
               }
@@ -196,73 +289,7 @@ function MapaProjetos() {
     }
 
     carregarECruzarDados();
-  }, []);
-
-  const normalizarTexto = (texto) => {
-    return texto
-      ? texto
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z0-9]/g, "")
-          .toUpperCase()
-          .trim()
-      : "";
-  };
-
-  const CORES_DIREC = {
-    NATAL: "#41909A", EXTREMOZ: "#41909A", MACAIBA: "#41909A", SAOGONCALODOAMARANTE: "#41909A",
-    ARES: "#8D4170", BAIAFORMOSA: "#8D4170", CANGUARETAMA: "#8D4170", GOIANINHA: "#8D4170",
-    MONTEALEGRE: "#8D4170", NISIAFLORESTA: "#8D4170", PARNAMIRIM: "#8D4170",
-    SAOJOSEADEMIPIBU: "#8D4170", SAOJOSEDEMIPIBU: "#8D4170", SENADORGEORGINOAVELINO: "#8D4170",
-    TIBAUDOSUL: "#8D4170", VERACRUZ: "#8D4170", VILAFLOR: "#8D4170",
-    BOASAUDE: "#B7DCCA", JANUARIOCICCO: "#B7DCCA", BREJINHO: "#B7DCCA", ESPIRITOSANTO: "#B7DCCA",
-    JUNDIA: "#B7DCCA", LAGOADANTA: "#B7DCCA", LAGOADEDANTAS: "#B7DCCA", LAGOADEPEDRAS: "#B7DCCA",
-    LAGOASALGADA: "#B7DCCA", MONTANHAS: "#B7DCCA", MONTEDASGAMELEIRAS: "#B7DCCA", NOVACRUZ: "#B7DCCA",
-    PASSAEFICA: "#B7DCCA", PASSAGEM: "#B7DCCA", PEDROVELHO: "#B7DCCA", SANTOANTONIO: "#B7DCCA",
-    SAOJOSEDOCAMPESTRE: "#B7DCCA", SERRADESAOBENTO: "#B7DCCA", SERRINHA: "#B7DCCA", VARZEA: "#B7DCCA",
-    BARCELONA: "#98956C", BOMJESUS: "#98956C", CAICARADORIODOVENTO: "#98956C", IELMOMARINHO: "#98956C",
-    LAGOADEVELHOS: "#98956C", RIACHUELO: "#98956C", RUYBARBOSA: "#98956C", SANTAMARIA: "#98956C",
-    SAOPAULODOPOTENGI: "#98956C", SAOPEDRO: "#98956C", SAOTOME: "#98956C", SENADORELOIDESOUZA: "#98956C",
-    SERRACAIADA: "#98956C", PRESIDENTEJUSCELINO: "#98956C",
-    CEARAMIRIM: "#FFF99C", MAXARANGUAPE: "#FFF99C", PUREZA: "#FFF99C", RIODOFOGO: "#FFF99C",
-    SAOMIGUELDOGOSTOSO: "#FFF99C", TAIPU: "#FFF99C", TOUROS: "#FFF99C",
-    ALTODORODRIGUES: "#7A7198", GALINHOS: "#7A7198", GUAMARE: "#7A7198", MACAU: "#7A7198",
-    PENDENCIAS: "#7A7198", PORTODOMANGUE: "#7A7198",
-    CAMPOREDONDO: "#E87878", CORONELEZEQUIEL: "#E87878", JACANA: "#E87878", JAPI: "#E87878",
-    LAJESPINTADAS: "#E87878", SANTACRUZ: "#E87878", SAOBENTODOTRAIRI: "#E87878", SITIONOVO: "#E87878", TANGARA: "#E87878",
-    AFONSOBEZERRA: "#97AEBE", ANGICOS: "#97AEBE", BODO: "#97AEBE", BODOBO: "#97AEBE",
-    FERNANDOPEDROZA: "#97AEBE", LAJES: "#97AEBE", PEDROAVELINO: "#97AEBE", SANTANADOMATOS: "#97AEBE",
-    ACARI: "#87C127", CARNAUBADOSDANTAS: "#87C127", CERROCORA: "#87C127", CRUZETA: "#87C127",
-    CURRAISNOVOS: "#87C127", EQUADOR: "#87C127", FLORANIA: "#87C127", LAGOANOVA: "#87C127",
-    PARELHAS: "#87C127", SANTANADOSERIDO: "#87C127", SAOVICENTE: "#87C127", TENENTELAURENTINOCRUZ: "#87C127",
-    CAICO: "#007CC2", IPUEIRA: "#007CC2", JARDIMDEPIRANHAS: "#007CC2", JARDIMDOSERIDO: "#007CC2",
-    JUCURUTU: "#007CC2", OUROBRANCO: "#007CC2", SAOFERNANDO: "#007CC2", SAOJOAODOSABUGI: "#007CC2",
-    SAOJOSEDADOSERIDO: "#007CC2", SAOJOSEDOSERIDO: "#007CC2", SERRANEGRADONORTE: "#007CC2", TIMBAUBADOSBATISTAS: "#007CC2",
-    ACU: "#DA251D", ASSU: "#DA251D", CAMPOGRANDE: "#DA251D", CARNAUBAIS: "#DA251D",
-    IPANGUACU: "#DA251D", ITAJA: "#DA251D", PARAU: "#DA251D", SAORAFAEL: "#DA251D",
-    TRIUNFOPOTIGUAR: "#DA251D", AUGUSTOSEVERO: "#DA251D",
-    AREIABRANCA: "#FFF420", BARAUNA: "#FFF420", GOVERNADORDIXSEPTROSADO: "#FFF420",
-    GROSSOS: "#FFF420", MOSSORO: "#FFF420", SERRADOMEL: "#FFF420", TIBAU: "#FFF420", UPANEMA: "#FFF420",
-    APODI: "#E77917", CARAUBAS: "#E77917", FELIPEGUERRA: "#E77917", ITAU: "#E77917",
-    RODOLFOFERNANDES: "#E77917", SEVERIANOMELO: "#E77917", TABOLEIROGRANDE: "#E77917",
-    ALMINOAFONSO: "#DEDEDC", ANTONIOMARTINS: "#DEDEDC", FRUTUOSOGOMES: "#DEDEDC", JANDUIS: "#DEDEDC",
-    JOAODIAS: "#DEDEDC", LUCRECIA: "#DEDEDC", MARTINS: "#DEDEDC", MESSIASTARGINO: "#DEDEDC",
-    OLHODAGUADOSBORGES: "#DEDEDC", PATU: "#DEDEDC", RAFAELGODEIRO: "#DEDEDC", RIACHODACRUZ: "#DEDEDC",
-    SERRINHADOSPINTOS: "#DEDEDC", UMARIZAL: "#DEDEDC", VICOSA: "#DEDEDC",
-    AGUANOVA: "#01923F", ALEXANDRIA: "#01923F", CORONELJOAOPESSOA: "#01923F", DOUTORSEVERIANO: "#01923F",
-    ENCANTO: "#01923F", FRANCISCODANTAS: "#01923F", JOSEDAPENHA: "#01923F", LUISGOMES: "#01923F",
-    MAJORSALES: "#01923F", MARCELINOVIEIRA: "#01923F", PARANA: "#01923F", PAUDOSFERROS: "#01923F",
-    PILOES: "#01923F", PORTALEGRE: "#01923F", RAFAELFERNANDES: "#01923F", RIACHODESANTANA: "#01923F",
-    SAOFRANCISCODOOESTE: "#01923F", SAOMIGUEL: "#01923F", TENENTEANANIAS: "#01923F", VENHAVER: "#01923F",
-    BENTOFERNANDES: "#485778", CAICARADONORTE: "#485778", JANDAIRA: "#485778", JARDIMDEANGICOS: "#485778",
-    JOAOCAMARA: "#485778", PARAZINHO: "#485778", PEDRAGRANDE: "#485778", PEDRAPRETA: "#485778",
-    POCOBRANCO: "#485778", SAOBENTODONORTE: "#485778",
-  };
-
-  const obterCorDirec = (nomeBruto) => {
-    const nomeLimpo = normalizarTexto(nomeBruto);
-    return CORES_DIREC[nomeLimpo] || null;
-  };
+  }, [URL_ESCOLAS_CSV, URL_PROJETOS_CSV, URL_IBGE_RN]);
 
   const getEstiloMunicipio = (feature) => {
     const nomeBruto =
@@ -345,34 +372,114 @@ function MapaProjetos() {
     );
   };
 
-  const projetosFiltrados = projetosComCoordenadas.filter((item) => {
-    const passaEtapa =
-      etapasSelecionadas.length === 0 || etapasSelecionadas.includes(item.etapa);
-    const passaModalidade =
-      modalidadesSelecionadas.length === 0 ||
-      (item.modalidade && modalidadesSelecionadas.includes(item.modalidade));
-    const passaArea =
-      areasSelecionadas.length === 0 ||
-      (item.area && areasSelecionadas.includes(item.area));
-    const passaComponente =
-      componentesSelecionados.length === 0 ||
-      (item.componente && componentesSelecionados.includes(item.componente));
+  // Verificação de Etapas Inteligente
+  const checarEtapaMatch = (etapaProjeto, filtroSelecionado, dadosProjetoCompleto) => {
+    const textoBase = normalizarTexto(etapaProjeto) + " " + normalizarTexto(JSON.stringify(dadosProjetoCompleto || {}));
 
-    return passaEtapa && passaModalidade && passaArea && passaComponente;
+    if (filtroSelecionado.includes("1º ao 5º")) {
+      return (
+        textoBase.includes("1") ||
+        textoBase.includes("2") ||
+        textoBase.includes("3") ||
+        textoBase.includes("4") ||
+        textoBase.includes("5") ||
+        textoBase.includes("INICIAIS") ||
+        textoBase.includes("FUNDAMENTALI")
+      );
+    }
+
+    if (filtroSelecionado.includes("6º ao 9º")) {
+      return (
+        textoBase.includes("6") ||
+        textoBase.includes("7") ||
+        textoBase.includes("8") ||
+        textoBase.includes("9") ||
+        textoBase.includes("FINAIS") ||
+        textoBase.includes("FUNDAMENTALII")
+      );
+    }
+
+    if (filtroSelecionado.includes("Médio")) {
+      return (
+        textoBase.includes("MEDIO") ||
+        textoBase.includes("HIGH") ||
+        textoBase.includes("EM")
+      );
+    }
+
+    return false;
+  };
+
+  const contemTextoGenerico = (valorPlanilha, listaFiltros, dadosProjetoCompleto) => {
+    if (!listaFiltros || listaFiltros.length === 0) return false;
+
+    const textoPlanilha = normalizarTexto(valorPlanilha) + " " + normalizarTexto(JSON.stringify(dadosProjetoCompleto || {}));
+
+    return listaFiltros.some((filtro) => {
+      const filtroNorm = normalizarTexto(filtro);
+      return textoPlanilha.includes(filtroNorm);
+    });
+  };
+
+  // FILTRAGEM COM LÓGICA DE UNIAO (OU) ENTRE CATEGORIAS
+  const projetosFiltrados = projetosComCoordenadas.filter((item) => {
+    const temFiltroCategoriaAtivo =
+      etapasSelecionadas.length > 0 ||
+      modalidadesSelecionadas.length > 0 ||
+      areasSelecionadas.length > 0 ||
+      componentesSelecionados.length > 0;
+
+    const passaEtapa =
+      etapasSelecionadas.length > 0 &&
+      etapasSelecionadas.some((etapaFiltro) =>
+        checarEtapaMatch(item.etapa, etapaFiltro, item.dadosCompletosProjeto)
+      );
+
+    const passaModalidade = contemTextoGenerico(
+      item.modalidade,
+      modalidadesSelecionadas,
+      item.dadosCompletosProjeto
+    );
+
+    const passaArea = contemTextoGenerico(
+      item.area,
+      areasSelecionadas,
+      item.dadosCompletosProjeto
+    );
+
+    const passaComponente = contemTextoGenerico(
+      item.componente,
+      componentesSelecionados,
+      item.dadosCompletosProjeto
+    );
+
+    // LÓGICA ACUMULATIVA (OU):
+    // Se houver algum filtro ativo, a marcação é mantida no mapa se passar em pelo menos um deles.
+    const passaCategoria =
+      !temFiltroCategoriaAtivo ||
+      (passaEtapa || passaModalidade || passaArea || passaComponente);
+
+    const passaDirec =
+      !direcSelecionada || item.corDirec === direcSelecionada;
+
+    const passaMunicipio =
+      !municipioClicadoNome ||
+      normalizarTexto(item.municipio) === normalizarTexto(municipioClicadoNome);
+
+    return passaCategoria && passaDirec && passaMunicipio;
   });
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", display: "flex", flexDirection: "row", overflow: "hidden" }}>
       <style>{`
-        /* Estilização limpa e legível dos rótulos dos municípios */
         .rotulo-municipio-destacado {
-          background: rgba(255, 255, 255, 0.9) !important;
+          background: rgba(255, 255, 255, 0.95) !important;
           border: 1px solid #0f172a !important;
           border-radius: 4px !important;
           color: #0f172a !important;
           font-weight: 700 !important;
-          font-size: 10px !important;
-          padding: 2px 6px !important;
+          font-size: 11px !important;
+          padding: 3px 8px !important;
           box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2) !important;
         }
 
@@ -396,7 +503,8 @@ function MapaProjetos() {
         }
 
         .coluna-detalhes-esquerda {
-          width: 360px;
+          width: 33.33vw;
+          min-width: 360px;
           height: 100vh;
           background-color: #ffffff;
           box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.15);
@@ -409,86 +517,114 @@ function MapaProjetos() {
         }
       `}</style>
 
-      {/* BARRA LATERAL ESQUERDA - DETALHES DO PROJETO SELECIONADO */}
+      {/* BARRA LATERAL ESQUERDA */}
       {projetoSelecionado && (
         <div className="coluna-detalhes-esquerda">
-          <div style={{ padding: "16px", backgroundColor: "#0f172a", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>💻 Detalhes do Projeto</span>
+          <div style={{ padding: "18px 22px", backgroundColor: "#0f172a", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "17px", fontWeight: "bold", letterSpacing: "0.3px" }}>📋 Detalhes da Escola e Projeto</span>
             <button 
               onClick={() => setProjetoSelecionado(null)}
-              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "18px", fontWeight: "bold" }}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "22px", fontWeight: "bold" }}
             >
               ×
             </button>
           </div>
 
-          <div style={{ padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Instituição de Ensino</label>
-              <h3 style={{ margin: "4px 0 0 0", color: "#1e293b", fontSize: "16px", fontWeight: "700" }}>{projetoSelecionado.nomeEscola}</h3>
-            </div>
-
-            <div style={{ height: "1px", backgroundColor: "#e2e8f0" }} />
-
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Título / Ação Tecnológica</label>
-              <p style={{ margin: "4px 0 0 0", color: "#334155", fontSize: "13px", lineHeight: "1.5" }}>
-                {projetoSelecionado["Nome do Projeto"] || projetoSelecionado["Projeto"] || "Projeto de Inovação Pedagógica"}
-              </p>
-            </div>
-
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Código Institucional (INEP)</label>
-              <p style={{ margin: "4px 0 0 0", color: "#334155", fontSize: "13px" }}>{projetoSelecionado["INEP da Escola"] || projetoSelecionado.INEP}</p>
-            </div>
-
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Etapa Atendida</label>
-              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#e0f2fe", color: "#0369a1", fontWeight: "600" }}>
-                {projetoSelecionado.etapa || "Não informada"}
+          <div style={{ padding: "24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "22px" }}>
+            {/* BLOCO 1: ESCOLA */}
+            <div style={{ backgroundColor: "#f8fafc", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#0284c7", textTransform: "uppercase", display: "block", marginBottom: "14px", letterSpacing: "0.5px" }}>
+                🏫 Informações da Instituição (Planilha de Escolas)
               </span>
-            </div>
 
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Modalidade</label>
-              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#ccfbf1", color: "#0f766e", fontWeight: "600" }}>
-                {projetoSelecionado.modalidade || "Regular / Padrão"}
-              </span>
-            </div>
-
-            <div>
-              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Área do Conhecimento</label>
-              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#fef3c7", color: "#92400e", fontWeight: "600" }}>
-                {projetoSelecionado.area || "Multidisciplinar"}
-              </span>
-            </div>
-
-            {projetoSelecionado.componente && (
-              <div>
-                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Componente Curricular</label>
-                <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#e0e7ff", color: "#3730a3", fontWeight: "600" }}>
-                  {projetoSelecionado.componente}
-                </span>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Nome da Escola:</label>
+                <h3 style={{ margin: "4px 0 0 0", color: "#0f172a", fontSize: "18px", fontWeight: "700", lineHeight: "1.35" }}>
+                  {projetoSelecionado.nomeEscola}
+                </h3>
               </div>
-            )}
 
-            {projetoSelecionado["Descrição"] && (
-              <div>
-                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Resumo da Atividade</label>
-                <p style={{ margin: "4px 0 0 0", color: "#475569", fontSize: "12px", lineHeight: "1.6" }}>{projetoSelecionado["Descrição"]}</p>
-              </div>
-            )}
+              {projetoSelecionado.municipio && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Município:</label>
+                  <p style={{ margin: "3px 0 0 0", color: "#334155", fontSize: "14px", fontWeight: "600" }}>{projetoSelecionado.municipio}</p>
+                </div>
+              )}
+
+              {Object.entries(projetoSelecionado.dadosCompletosEscola || {}).map(([chave, valor]) => {
+                if (!valor || ["Nome", "NOME DA ESCOLA", "Escola", "Coordenadas", "Coordenada", "COORDENADAS"].includes(chave)) return null;
+                return (
+                  <div key={`escola_${chave}`} style={{ marginBottom: "10px" }}>
+                    <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "bold" }}>{chave}:</label>
+                    <p style={{ margin: "2px 0 0 0", color: "#334155", fontSize: "14px", lineHeight: "1.5" }}>{String(valor)}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* BLOCO 2: PROJETO */}
+            <div style={{ backgroundColor: "#f0fdf4", padding: "18px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#166534", textTransform: "uppercase", display: "block", marginBottom: "14px", letterSpacing: "0.5px" }}>
+                💡 Detalhes da Ação Tecnológica (Planilha de Projetos)
+              </span>
+
+              {projetoSelecionado.etapa && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ fontSize: "12px", color: "#166534", fontWeight: "bold" }}>Etapa de Ensino:</label>
+                  <span style={{ display: "block", marginTop: "4px", padding: "5px 10px", fontSize: "13px", borderRadius: "6px", backgroundColor: "#e0f2fe", color: "#0369a1", fontWeight: "600", width: "fit-content" }}>
+                    {projetoSelecionado.etapa}
+                  </span>
+                </div>
+              )}
+
+              {projetoSelecionado.modalidade && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ fontSize: "12px", color: "#166534", fontWeight: "bold" }}>Modalidade:</label>
+                  <span style={{ display: "block", marginTop: "4px", padding: "5px 10px", fontSize: "13px", borderRadius: "6px", backgroundColor: "#ccfbf1", color: "#0f766e", fontWeight: "600", width: "fit-content" }}>
+                    {projetoSelecionado.modalidade}
+                  </span>
+                </div>
+              )}
+
+              {projetoSelecionado.area && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ fontSize: "12px", color: "#166534", fontWeight: "bold" }}>Área do Conhecimento:</label>
+                  <span style={{ display: "block", marginTop: "4px", padding: "5px 10px", fontSize: "13px", borderRadius: "6px", backgroundColor: "#fef3c7", color: "#92400e", fontWeight: "600", width: "fit-content" }}>
+                    {projetoSelecionado.area}
+                  </span>
+                </div>
+              )}
+
+              {projetoSelecionado.componente && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ fontSize: "12px", color: "#166534", fontWeight: "bold" }}>Componente Curricular:</label>
+                  <span style={{ display: "block", marginTop: "4px", padding: "5px 10px", fontSize: "13px", borderRadius: "6px", backgroundColor: "#e0e7ff", color: "#3730a3", fontWeight: "600", width: "fit-content" }}>
+                    {projetoSelecionado.componente}
+                  </span>
+                </div>
+              )}
+
+              {Object.entries(projetoSelecionado.dadosCompletosProjeto || {}).map(([chave, valor]) => {
+                if (!valor || ["INEP da Escola", "INEP", "Etapa de Ensino", "Etapa", "Modalidade de Ensino", "Modalidade", "Área de Conhecimento", "Area de Conhecimento", "Área", "Area", "Componente Curricular", "Componente", "Disciplina"].includes(chave)) return null;
+                return (
+                  <div key={`proj_${chave}`} style={{ marginBottom: "10px" }}>
+                    <label style={{ fontSize: "12px", color: "#166534", fontWeight: "bold" }}>{chave}:</label>
+                    <p style={{ margin: "3px 0 0 0", color: "#14532d", fontSize: "14px", lineHeight: "1.5" }}>{String(valor)}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
-      {/* CONTAINER DO MAPA E DOS FILTROS FLUTUANTES */}
+      {/* CONTAINER DO MAPA */}
       <div style={{ flex: 1, position: "relative", height: "100%" }}>
         
-        {/* CONTAINER SUPERIOR DIREITO FLEXBOX */}
+        {/* CONTAINER SUPERIOR DIREITO */}
         <div className="painel-superior-direito-row">
           
-          {/* 1. PAINEL DE FILTROS DO PROJETO */}
+          {/* PAINEL DE FILTROS */}
           <div
             className="item-row-container"
             style={{
@@ -510,7 +646,7 @@ function MapaProjetos() {
               onClick={() => setPainelFiltrosAberto(!painelFiltrosAberto)}
             >
               <strong style={{ fontSize: "13px", color: "#1e293b" }}>
-                🎯 Filtros do Projeto
+                🎯 Filtros do Projeto ({projetosFiltrados.length} pins)
               </strong>
               <span style={{ fontSize: "12px", color: "#64748b" }}>
                 {painelFiltrosAberto ? "➖" : "➕"}
@@ -694,14 +830,14 @@ function MapaProjetos() {
                       textDecoration: "underline",
                     }}
                   >
-                    Limpar filtros
+                    Limpar filtros de categoria
                   </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* 2. LEGENDA DAS DIRECs */}
+          {/* LEGENDA DAS DIRECs */}
           <div className="item-row-container">
             <LegendaDirec
               onSelectDirec={handleSelectDirecDaLegenda}
@@ -710,7 +846,7 @@ function MapaProjetos() {
           </div>
         </div>
 
-        {/* Card Flutuante de Informações da Seleção Ativa */}
+        {/* Card Flutuante de Seleção Ativa */}
         {municipioInfo && (
           <div
             style={{
@@ -763,9 +899,8 @@ function MapaProjetos() {
           style={{ height: "100%", width: "100%" }}
         >
           <ZoomControl position="bottomleft" />
-          <ControladorDeFoco direcSelecionada={direcSelecionada} focoMunicipio={focoMunicipio} />
+          <ControladorDeFoco direcSelecionada={direcSelecionada} focoMunicipio={focoMunicipio} projetoSelecionado={projetoSelecionado} />
 
-          {/* MAPA BASE LIMPO E NÍTIDO */}
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
             attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> &copy; <a href='https://carto.com/attributions'>CARTO</a>"
@@ -807,14 +942,12 @@ function MapaProjetos() {
                     const direcAtual = direcRef.current;
                     const munAtual = municipioNomeRef.current;
 
-                    // 3º Clique: Se o município clicado já for o município com foco ativo, reseta o mapa para a visão original
                     if (munAtual === nomeMun) {
                       setDirecSelecionada(null);
                       setFocoMunicipio(null);
                       setMunicipioInfo(null);
                       setMunicipioClicadoNome(null);
                     } 
-                    // 2º Clique: Se a DIREC já estiver ativa, aproxima no município
                     else if (direcAtual === corDirec && corDirec) {
                       setFocoMunicipio({ lat: centro.lat, lng: centro.lng });
                       setMunicipioClicadoNome(nomeMun);
@@ -823,7 +956,6 @@ function MapaProjetos() {
                         cor: corDirec || "#0284c7",
                       });
                     } 
-                    // 1º Clique: Seleciona e aproxima para a regional (DIREC)
                     else {
                       setDirecSelecionada(corDirec);
                       setFocoMunicipio(null);
@@ -851,9 +983,9 @@ function MapaProjetos() {
             >
               <Popup>
                 <strong>{item.nomeEscola}</strong> <br />
+                {item.municipio && <span>Município: {item.municipio}<br /></span>}
                 {item.area && <span>Área: {item.area}<br /></span>}
-                {item.componente && <span>Componente: {item.componente}<br /></span>}
-                <small style={{ color: "#0284c7", fontWeight: "bold" }}>Clique para abrir detalhes à esquerda</small>
+                <small style={{ color: "#0284c7", fontWeight: "bold" }}>Clique para exibir todos os dados na coluna lateral</small>
               </Popup>
             </Marker>
           ))}
