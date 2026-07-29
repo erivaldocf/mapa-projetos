@@ -34,29 +34,56 @@ export const MODALIDADES_ENSINO = [
   "Educação a Distância (EaD)",
 ];
 
-// 📌 Componente auxiliar interno para gerenciar o efeito flyTo de zoom animado no mapa
-function ControladorDeFoco({ direcSelecionada }) {
+export const AREAS_CONHECIMENTO = [
+  "Linguagens",
+  "Matemática",
+  "Ciências da Natureza",
+  "Ciências Humanas",
+];
+
+// Lista de Componentes Curriculares (Estrutura aberta para inclusão futura dos EPTs)
+export const COMPONENTES_CURRICULARES = [
+  "Língua Portuguesa",
+  "Matemática",
+  "História",
+  "Geografia",
+  "Ciências",
+  "Biologia",
+  "Química",
+  "Física",
+  "Artes",
+  "Educação Física",
+  "Língua Inglesa",
+  "Língua Espanhola",
+  "Filosofia",
+  "Sociologia",
+];
+
+// Componente auxiliar interno para gerenciar o efeito flyTo com hierarquia: Município (11.5) > DIREC (10.5) > Estado (8)
+function ControladorDeFoco({ direcSelecionada, focoMunicipio }) {
   const map = useMap();
 
   useEffect(() => {
-    if (direcSelecionada) {
-      // Encontra a regional ativa para extrair as coordenadas da sede correspondente
+    if (focoMunicipio) {
+      map.flyTo([focoMunicipio.lat, focoMunicipio.lng], 11.5, {
+        animate: true,
+        duration: 1.5,
+      });
+    } else if (direcSelecionada) {
       const regionalAtiva = LISTA_DIRECS.find((item) => item.cor === direcSelecionada);
       if (regionalAtiva) {
-        // Aplica o zoom com transição suave na sede da DIREC
         map.flyTo([regionalAtiva.lat, regionalAtiva.lng], 10.5, {
           animate: true,
           duration: 1.5,
         });
       }
     } else {
-      // Retorna ao enquadramento geral do RN quando a seleção é desfeita
       map.flyTo([-5.7, -36.5], 8, {
         animate: true,
         duration: 1.2,
       });
     }
-  }, [direcSelecionada, map]);
+  }, [direcSelecionada, focoMunicipio, map]);
 
   return null;
 }
@@ -65,12 +92,18 @@ function MapaProjetos() {
   const [projetosComCoordenadas, setProjetosComCoordenadas] = useState([]);
   const [geoJsonRN, setGeoJsonRN] = useState(null);
 
-  // Estados de Seleção e Filtro
+  // Estados de Seleção, Foco e Filtro
   const [direcSelecionada, setDirecSelecionada] = useState(null);
+  const [focoMunicipio, setFocoMunicipio] = useState(null);
   const [municipioInfo, setMunicipioInfo] = useState(null);
   const [etapasSelecionadas, setEtapasSelecionadas] = useState([]);
   const [modalidadesSelecionadas, setModalidadesSelecionadas] = useState([]);
+  const [areasSelecionadas, setAreasSelecionadas] = useState([]);
+  const [componentesSelecionados, setComponentesSelecionados] = useState([]);
   const [painelFiltrosAberto, setPainelFiltrosAberto] = useState(true);
+  
+  // Estado para controlar a exibição dos detalhes do projeto na coluna esquerda
+  const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
   const URL_ESCOLAS_CSV =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSy5iLlbtrxjoKlraHw-2G30n7RbBjkQg20Kp0xsT6yWZRt810McLpE78xboZqthPkjsUbosc87jajg/pub?gid=882632808&single=true&output=csv";
@@ -80,7 +113,6 @@ function MapaProjetos() {
     "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-24-mun.json";
 
   useEffect(() => {
-    // Carrega GeoJSON do RN
     fetch(URL_IBGE_RN)
       .then((res) => res.json())
       .then((data) => {
@@ -90,7 +122,6 @@ function MapaProjetos() {
       })
       .catch((err) => console.error("Erro ao carregar GeoJSON:", err));
 
-    // Carrega e cruza planilhas de Escolas e Projetos
     async function carregarECruzarDados() {
       try {
         const resEscolas = await fetch(URL_ESCOLAS_CSV);
@@ -135,7 +166,9 @@ function MapaProjetos() {
                     ...projeto,
                     nomeEscola: nomeEscola,
                     etapa: projeto["Etapa de Ensino"] || projeto["Etapa"] || "",
-                    modalidade: project => projeto["Modalidade de Ensino"] || projeto["Modalidade"] || "",
+                    modalidade: projeto["Modalidade de Ensino"] || projeto["Modalidade"] || "",
+                    area: projeto["Área de Conhecimento"] || projeto["Area de Conhecimento"] || projeto["Área"] || projeto["Area"] || "",
+                    componente: projeto["Componente Curricular"] || projeto["Componente"] || projeto["Disciplina"] || "",
                     lat: lat,
                     lng: lng,
                   };
@@ -155,7 +188,6 @@ function MapaProjetos() {
     carregarECruzarDados();
   }, []);
 
-  // Limpeza de texto para casamento dos municípios
   const normalizarTexto = (texto) => {
     return texto
       ? texto
@@ -261,9 +293,11 @@ function MapaProjetos() {
   const handleSelectDirecDaLegenda = (direcItem) => {
     if (direcSelecionada === direcItem.cor) {
       setDirecSelecionada(null);
+      setFocoMunicipio(null);
       setMunicipioInfo(null);
     } else {
       setDirecSelecionada(direcItem.cor);
+      setFocoMunicipio(null);
       setMunicipioInfo({
         nome: `${direcItem.id} - Sede: ${direcItem.sede}`,
         cor: direcItem.cor,
@@ -285,19 +319,38 @@ function MapaProjetos() {
     );
   };
 
+  const toggleArea = (area) => {
+    setAreasSelecionadas((prev) =>
+      prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
+    );
+  };
+
+  const toggleComponente = (componente) => {
+    setComponentesSelecionados((prev) =>
+      prev.includes(componente)
+        ? prev.filter((c) => c !== componente)
+        : [...prev, componente]
+    );
+  };
+
   const projetosFiltrados = projetosComCoordenadas.filter((item) => {
     const passaEtapa =
       etapasSelecionadas.length === 0 || etapasSelecionadas.includes(item.etapa);
     const passaModalidade =
       modalidadesSelecionadas.length === 0 ||
       (item.modalidade && modalidadesSelecionadas.includes(item.modalidade));
+    const passaArea =
+      areasSelecionadas.length === 0 ||
+      (item.area && areasSelecionadas.includes(item.area));
+    const passaComponente =
+      componentesSelecionados.length === 0 ||
+      (item.componente && componentesSelecionados.includes(item.componente));
 
-    return passaEtapa && passaModalidade;
+    return passaEtapa && passaModalidade && passaArea && passaComponente;
   });
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-      {/* 📌 ESTILO EMBUTIDO COMPACTO PARA ALINHAMENTO HORIZONTAL NO CANTO SUPERIOR DIREITO */}
+    <div style={{ position: "relative", width: "100%", height: "100vh", display: "flex", flexDirection: "row", overflow: "hidden" }}>
       <style>{`
         .painel-superior-direito-row {
           position: absolute !important;
@@ -317,269 +370,450 @@ function MapaProjetos() {
           max-height: calc(100vh - 40px) !important;
           overflow-y: auto !important;
         }
+
+        .coluna-detalhes-esquerda {
+          width: 360px;
+          height: 100vh;
+          background-color: #ffffff;
+          box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.15);
+          z-index: 1010;
+          display: flex;
+          flex-direction: column;
+          font-family: sans-serif;
+          transition: all 0.3s ease;
+          border-right: 1px solid #e2e8f0;
+        }
       `}</style>
 
-      {/* CONTAINER SUPERIOR DIREITO FLEXBOX (ROW) */}
-      <div
-        className="painel-superior-direito-row"
-        onMouseDown={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
-      >
-        {/* 1. PAINEL DE FILTROS DE ENSINO */}
-        <div
-          className="item-row-container"
-          style={{
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            padding: "12px 14px",
-            borderRadius: "8px",
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
-            width: "260px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              cursor: "pointer",
-              marginBottom: painelFiltrosAberto ? "10px" : "0",
-            }}
-            onClick={() => setPainelFiltrosAberto(!painelFiltrosAberto)}
-          >
-            <strong style={{ fontSize: "13px", color: "#1e293b" }}>
-              🎯 Filtros de Ensino
-            </strong>
-            <span style={{ fontSize: "12px", color: "#64748b" }}>
-              {painelFiltrosAberto ? "➖" : "➕"}
-            </span>
-          </div>
-
-          {painelFiltrosAberto && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {/* Etapa de Ensino */}
-              <div>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    color: "#475569",
-                    display: "block",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Etapa de Ensino:
-                </span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                  {ETAPAS_ENSINO.map((etapa) => {
-                    const ativa = etapasSelecionadas.includes(etapa);
-                    return (
-                      <button
-                        key={etapa}
-                        onClick={() => toggleEtapa(etapa)}
-                        style={{
-                          padding: "3px 8px",
-                          fontSize: "10px",
-                          borderRadius: "12px",
-                          border: "1px solid #0284c7",
-                          backgroundColor: ativa ? "#0284c7" : "#ffffff",
-                          color: ativa ? "#ffffff" : "#0284c7",
-                          cursor: "pointer",
-                          fontWeight: ativa ? "bold" : "normal",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        {etapa}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Modalidade de Ensino */}
-              <div>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    color: "#475569",
-                    display: "block",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Modalidade de Ensino:
-                </span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                  {MODALIDADES_ENSINO.map((modalidade) => {
-                    const ativa = modalidadesSelecionadas.includes(modalidade);
-                    return (
-                      <button
-                        key={modalidade}
-                        onClick={() => toggleModalidade(modalidade)}
-                        style={{
-                          padding: "3px 8px",
-                          fontSize: "10px",
-                          borderRadius: "12px",
-                          border: "1px solid #0d9488",
-                          backgroundColor: ativa ? "#0d9488" : "#ffffff",
-                          color: ativa ? "#ffffff" : "#0d9488",
-                          cursor: "pointer",
-                          fontWeight: ativa ? "bold" : "normal",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        {modalidade}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {(etapasSelecionadas.length > 0 || modalidadesSelecionadas.length > 0) && (
-                <button
-                  onClick={() => {
-                    setEtapasSelecionadas([]);
-                    setModalidadesSelecionadas([]);
-                  }}
-                  style={{
-                    padding: "2px 0",
-                    fontSize: "10px",
-                    color: "#ef4444",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "right",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Limpar filtros
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 2. LEGENDA DAS DIRECs */}
-        <div className="item-row-container">
-          <LegendaDirec
-            onSelectDirec={handleSelectDirecDaLegenda}
-            direcSelecionada={direcSelecionada}
-          />
-        </div>
-      </div>
-
-      {/* Card Flutuante de Informações da DIREC Selecionada */}
-      {municipioInfo && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "30px",
-            right: "15px",
-            zIndex: 1000,
-            backgroundColor: "#ffffff",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
-            minWidth: "220px",
-            borderLeft: `6px solid ${municipioInfo.cor}`,
-            fontFamily: "sans-serif",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-            <h4 style={{ margin: 0, color: "#1e293b", fontSize: "14px" }}>
-              {municipioInfo.nome}
-            </h4>
-            <button
-              onClick={() => {
-                setDirecSelecionada(null);
-                setMunicipioInfo(null);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "14px",
-                color: "#64748b",
-              }}
+      {/* 📌 BARRA LATERAL ESQUERDA - DETALHES DO PROJETO SELECIONADO */}
+      {projetoSelecionado && (
+        <div className="coluna-detalhes-esquerda">
+          <div style={{ padding: "16px", backgroundColor: "#0f172a", color: "#ffffff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "14px", fontWeight: "bold" }}>💻 Detalhes do Projeto</span>
+            <button 
+              onClick={() => setProjetoSelecionado(null)}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "18px", fontWeight: "bold" }}
             >
-              ✖
+              ×
             </button>
           </div>
-          <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
-            Exibindo destaque da DIREC
-          </small>
+
+          <div style={{ padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Instituição de Ensino</label>
+              <h3 style={{ margin: "4px 0 0 0", color: "#1e293b", fontSize: "16px", fontWeight: "700" }}>{projetoSelecionado.nomeEscola}</h3>
+            </div>
+
+            <div style={{ height: "1px", backgroundColor: "#e2e8f0" }} />
+
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Título / Ação Tecnológica</label>
+              <p style={{ margin: "4px 0 0 0", color: "#334155", fontSize: "13px", lineHeight: "1.5" }}>
+                {projetoSelecionado["Nome do Projeto"] || projetoSelecionado["Projeto"] || "Projeto de Inovação Pedagógica"}
+              </p>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Código Institucional (INEP)</label>
+              <p style={{ margin: "4px 0 0 0", color: "#334155", fontSize: "13px" }}>{projetoSelecionado["INEP da Escola"] || projetoSelecionado.INEP}</p>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Etapa Atendida</label>
+              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#e0f2fe", color: "#0369a1", fontWeight: "600" }}>
+                {projetoSelecionado.etapa || "Não informada"}
+              </span>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Modalidade</label>
+              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#ccfbf1", color: "#0f766e", fontWeight: "600" }}>
+                {projetoSelecionado.modalidade || "Regular / Padrão"}
+              </span>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Área do Conhecimento</label>
+              <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#fef3c7", color: "#92400e", fontWeight: "600" }}>
+                {projetoSelecionado.area || "Multidisciplinar"}
+              </span>
+            </div>
+
+            {projetoSelecionado.componente && (
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Componente Curricular</label>
+                <span style={{ display: "inline-block", marginTop: "4px", padding: "4px 8px", fontSize: "11px", borderRadius: "4px", backgroundColor: "#e0e7ff", color: "#3730a3", fontWeight: "600" }}>
+                  {projetoSelecionado.componente}
+                </span>
+              </div>
+            )}
+
+            {projetoSelecionado["Descrição"] && (
+              <div>
+                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Resumo da Atividade</label>
+                <p style={{ margin: "4px 0 0 0", color: "#475569", fontSize: "12px", lineHeight: "1.6" }}>{projetoSelecionado["Descrição"]}</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* MAPA LEAFLET */}
-      <MapContainer
-        center={[-5.7, -36.5]}
-        zoom={8}
-        zoomControl={false}
-        style={{ height: "100%", width: "100%" }}
-      >
-        {/* Controle nativo de Zoom realocado para a parte inferior esquerda do layout */}
-        <ZoomControl position="bottomleft" />
-
-        {/* 📌 Injeção do componente de controle de foco de aproximação automática */}
-        <ControladorDeFoco direcSelecionada={direcSelecionada} />
-
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-          attribution="&copy; CARTO &copy; OpenStreetMap"
-        />
-
-        {geoJsonRN && (
-          <GeoJSON
-            key={
-              (direcSelecionada || "todas") +
-              (geoJsonRN.features?.length || "geojson")
-            }
-            data={geoJsonRN}
-            style={getEstiloMunicipio}
-            onEachFeature={(feature, layer) => {
-              const nomeMun =
-                feature?.properties?.name ||
-                feature?.properties?.description ||
-                "Município";
-              const corDirec = obterCorDirec(nomeMun);
-
-              layer.bindTooltip(nomeMun, { sticky: true });
-
-              layer.on({
-                mouseover: (e) => {
-                  e.target.setStyle({ weight: 2.5, fillOpacity: 0.9 });
-                },
-                mouseout: (e) => {
-                  e.target.setStyle(getEstiloMunicipio(feature));
-                },
-                click: () => {
-                  if (direcSelecionada === corDirec) {
-                    setDirecSelecionada(null);
-                    setMunicipioInfo(null);
-                  } else {
-                    setDirecSelecionada(corDirec);
-                    setMunicipioInfo({
-                      nome: nomeMun,
-                      cor: corDirec || "#ccc",
-                    });
-                  }
-                },
-              });
+      {/* CONTAINER DO MAPA E DOS FILTROS FLUTUANTES */}
+      <div style={{ flex: 1, position: "relative", height: "100%" }}>
+        
+        {/* CONTAINER SUPERIOR DIREITO FLEXBOX */}
+        <div className="painel-superior-direito-row">
+          
+          {/* 1. PAINEL DE FILTROS DO PROJETO */}
+          <div
+            className="item-row-container"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              padding: "12px 14px",
+              borderRadius: "8px",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+              width: "290px",
             }}
-          />
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                marginBottom: painelFiltrosAberto ? "10px" : "0",
+              }}
+              onClick={() => setPainelFiltrosAberto(!painelFiltrosAberto)}
+            >
+              <strong style={{ fontSize: "13px", color: "#1e293b" }}>
+                🎯 Filtros do Projeto
+              </strong>
+              <span style={{ fontSize: "12px", color: "#64748b" }}>
+                {painelFiltrosAberto ? "➖" : "➕"}
+              </span>
+            </div>
+
+            {painelFiltrosAberto && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {/* Etapa de Ensino */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      color: "#475569",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Etapa de Ensino:
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {ETAPAS_ENSINO.map((etapa) => {
+                      const ativa = etapasSelecionadas.includes(etapa);
+                      return (
+                        <button
+                          key={etapa}
+                          onClick={() => toggleEtapa(etapa)}
+                          style={{
+                            padding: "3px 8px",
+                            fontSize: "10px",
+                            borderRadius: "12px",
+                            border: "1px solid #0284c7",
+                            backgroundColor: ativa ? "#0284c7" : "#ffffff",
+                            color: ativa ? "#ffffff" : "#0284c7",
+                            cursor: "pointer",
+                            fontWeight: ativa ? "bold" : "normal",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {etapa}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Modalidade de Ensino */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      color: "#475569",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Modalidade de Ensino:
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {MODALIDADES_ENSINO.map((modalidade) => {
+                      const ativa = modalidadesSelecionadas.includes(modalidade);
+                      return (
+                        <button
+                          key={modalidade}
+                          onClick={() => toggleModalidade(modalidade)}
+                          style={{
+                            padding: "3px 8px",
+                            fontSize: "10px",
+                            borderRadius: "12px",
+                            border: "1px solid #0d9488",
+                            backgroundColor: ativa ? "#0d9488" : "#ffffff",
+                            color: ativa ? "#ffffff" : "#0d9488",
+                            cursor: "pointer",
+                            fontWeight: ativa ? "bold" : "normal",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {modalidade}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Área de Conhecimento */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      color: "#475569",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Área de Conhecimento:
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {AREAS_CONHECIMENTO.map((area) => {
+                      const ativa = areasSelecionadas.includes(area);
+                      return (
+                        <button
+                          key={area}
+                          onClick={() => toggleArea(area)}
+                          style={{
+                            padding: "3px 8px",
+                            fontSize: "10px",
+                            borderRadius: "12px",
+                            border: "1px solid #b45309",
+                            backgroundColor: ativa ? "#b45309" : "#ffffff",
+                            color: ativa ? "#ffffff" : "#b45309",
+                            cursor: "pointer",
+                            fontWeight: ativa ? "bold" : "normal",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {area}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Componente Curricular */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      color: "#475569",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Componente Curricular:
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    {COMPONENTES_CURRICULARES.map((componente) => {
+                      const ativa = componentesSelecionados.includes(componente);
+                      return (
+                        <button
+                          key={componente}
+                          onClick={() => toggleComponente(componente)}
+                          style={{
+                            padding: "3px 8px",
+                            fontSize: "10px",
+                            borderRadius: "12px",
+                            border: "1px solid #4338ca",
+                            backgroundColor: ativa ? "#4338ca" : "#ffffff",
+                            color: ativa ? "#ffffff" : "#4338ca",
+                            cursor: "pointer",
+                            fontWeight: ativa ? "bold" : "normal",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          {componente}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {(etapasSelecionadas.length > 0 || modalidadesSelecionadas.length > 0 || areasSelecionadas.length > 0 || componentesSelecionados.length > 0) && (
+                  <button
+                    onClick={() => {
+                      setEtapasSelecionadas([]);
+                      setModalidadesSelecionadas([]);
+                      setAreasSelecionadas([]);
+                      setComponentesSelecionados([]);
+                    }}
+                    style={{
+                      padding: "2px 0",
+                      fontSize: "10px",
+                      color: "#ef4444",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "right",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 2. LEGENDA DAS DIRECs */}
+          <div className="item-row-container">
+            <LegendaDirec
+              onSelectDirec={handleSelectDirecDaLegenda}
+              direcSelecionada={direcSelecionada}
+            />
+          </div>
+        </div>
+
+        {/* Card Flutuante de Informações da Seleção Ativa */}
+        {municipioInfo && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "30px",
+              right: "15px",
+              zIndex: 1000,
+              backgroundColor: "#ffffff",
+              padding: "12px 16px",
+              borderRadius: "8px",
+              boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
+              minWidth: "220px",
+              borderLeft: `6px solid ${municipioInfo.cor}`,
+              fontFamily: "sans-serif",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+              <h4 style={{ margin: 0, color: "#1e293b", fontSize: "14px" }}>
+                {municipioInfo.nome}
+              </h4>
+              <button
+                onClick={() => {
+                  setDirecSelecionada(null);
+                  setFocoMunicipio(null);
+                  setMunicipioInfo(null);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  color: "#64748b",
+                }}
+              >
+                ✖
+              </button>
+            </div>
+            <small style={{ color: "#64748b", display: "block", marginTop: "4px" }}>
+              {focoMunicipio ? "Aproximação detalhada do Município" : "Exibindo destaque da DIREC"}
+            </small>
+          </div>
         )}
 
-        {projetosFiltrados.map((item, index) => (
-          <Marker key={index} position={[item.lat, item.lng]}>
-            <Popup>
-              <strong>{item.nomeEscola}</strong> <br />
-              {item.etapa && <span>Etapa: {item.etapa}<br /></span>}
-              {item.modalidade && <span>Modalidade: {item.modalidade}<br /></span>}
-              INEP: {item["INEP da Escola"] || item.INEP}
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+        {/* MAPA LEAFLET */}
+        <MapContainer
+          center={[-5.7, -36.5]}
+          zoom={8}
+          zoomControl={false}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <ZoomControl position="bottomleft" />
+          <ControladorDeFoco direcSelecionada={direcSelecionada} focoMunicipio={focoMunicipio} />
+
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+            attribution="&copy; CARTO &copy; OpenStreetMap"
+          />
+
+          {geoJsonRN && (
+            <GeoJSON
+              key={
+                (direcSelecionada || "todas") +
+                (geoJsonRN.features?.length || "geojson")
+              }
+              data={geoJsonRN}
+              style={getEstiloMunicipio}
+              onEachFeature={(feature, layer) => {
+                const nomeMun =
+                  feature?.properties?.name ||
+                  feature?.properties?.description ||
+                  "Município";
+                const corDirec = obterCorDirec(nomeMun);
+
+                layer.bindTooltip(nomeMun, { sticky: true });
+
+                layer.on({
+                  mouseover: (e) => {
+                    e.target.setStyle({ weight: 2.5, fillOpacity: 0.9 });
+                  },
+                  mouseout: (e) => {
+                    e.target.setStyle(getEstiloMunicipio(feature));
+                  },
+                  click: (e) => {
+                    const centro = e.target.getBounds().getCenter();
+
+                    if (direcSelecionada === corDirec && corDirec) {
+                      // Segundo clique no mesmo território regional: ativa aproximação no município (zoom 11.5)
+                      setFocoMunicipio({ lat: centro.lat, lng: centro.lng });
+                      setMunicipioInfo({
+                        nome: `Município: ${nomeMun}`,
+                        cor: corDirec || "#0284c7",
+                      });
+                    } else {
+                      // Primeiro clique: seleciona e aproxima para a DIREC correspondente (zoom 10.5)
+                      setDirecSelecionada(corDirec);
+                      setFocoMunicipio(null);
+                      setMunicipioInfo({
+                        nome: `DIREC: ${corDirec || "Regional"} (${nomeMun})`,
+                        cor: corDirec || "#0284c7",
+                      });
+                    }
+                  },
+                });
+              }}
+            />
+          )}
+
+          {projetosFiltrados.map((item, index) => (
+            <Marker 
+              key={index} 
+              position={[item.lat, item.lng]}
+              eventHandlers={{
+                click: () => {
+                  setProjetoSelecionado(item);
+                },
+              }}
+            >
+              <Popup>
+                <strong>{item.nomeEscola}</strong> <br />
+                {item.area && <span>Área: {item.area}<br /></span>}
+                {item.componente && <span>Componente: {item.componente}<br /></span>}
+                <small style={{ color: "#0284c7", fontWeight: "bold" }}>Clique para abrir detalhes à esquerda</small>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
   );
 }
