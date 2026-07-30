@@ -5,19 +5,6 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import LegendaDirec, { LISTA_DIRECS } from "./legendaDirec";
 
-// Ícones padrão do Leaflet
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-let DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
 // Listas de Opções para os Filtros
 export const ETAPAS_ENSINO = [
   "Ensino Fundamental (1º ao 5º)",
@@ -57,6 +44,58 @@ export const COMPONENTES_CURRICULARES = [
   "Filosofia",
   "Sociologia",
 ];
+
+// PALETA DE CORES DAS MODALIDADES
+const CORES_MODALIDADES = {
+  EJA: "#10b981",          // Verde
+  EPT: "#1e40af",          // Azul Escuro
+  ESPECIAL: "#8b5cf6",     // Roxo
+  CAMPO: "#d97706",        // Laranja/Terra
+  INTEGRAL: "#e11d48",     // Vermelho/Rosa
+  EAD: "#78350f",          // Marrom
+  PADRAO: "#0284c7"        // Azul Padrão
+};
+
+// Função para definir a cor do Pin com base na Modalidade (ou Etapa)
+const obterCorDoPin = (modalidade, etapa) => {
+  const modNorm = normalizarTexto(modalidade);
+
+  if (modNorm.includes("EJA") || modNorm.includes("JOVENS")) return CORES_MODALIDADES.EJA;
+  if (modNorm.includes("EPT") || modNorm.includes("PROFISSIONAL")) return CORES_MODALIDADES.EPT;
+  if (modNorm.includes("ESPECIAL")) return CORES_MODALIDADES.ESPECIAL;
+  if (modNorm.includes("CAMPO") || modNorm.includes("INDIGENA") || modNorm.includes("QUILOMBOLA")) return CORES_MODALIDADES.CAMPO;
+  if (modNorm.includes("INTEGRAL")) return CORES_MODALIDADES.INTEGRAL;
+  if (modNorm.includes("EAD") || modNorm.includes("DISTANCIA")) return CORES_MODALIDADES.EAD;
+
+  return CORES_MODALIDADES.PADRAO;
+};
+
+// Gerador de Ícones SVG com Contorno Destacado e Sombra
+const criarIconePin = (corPreenchimento) => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="28" height="42">
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.4"/>
+      </filter>
+      <g filter="url(#shadow)">
+        <!-- Borda Externa Branca -->
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24c0-6.63-5.37-12-12-12z" fill="#ffffff"/>
+        <!-- Corpo Colorido do Pin -->
+        <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12c0 8 10.5 21.2 10.5 21.2S22.5 20 22.5 12c0-5.8-4.7-10.5-10.5-10.5z" fill="${corPreenchimento}"/>
+        <!-- Círculo Central Branco com Contorno -->
+        <circle cx="12" cy="11" r="4.5" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+      </g>
+    </svg>
+  `;
+
+  return L.divIcon({
+    className: "custom-pin-icon",
+    html: svg,
+    iconSize: [28, 42],
+    iconAnchor: [14, 42],
+    popupAnchor: [0, -38],
+  });
+};
 
 // Mapeamento das cores das DIRECs por município
 const CORES_DIREC = {
@@ -372,7 +411,6 @@ function MapaProjetos() {
     );
   };
 
-  // Verificação de Etapas Inteligente
   const checarEtapaMatch = (etapaProjeto, filtroSelecionado, dadosProjetoCompleto) => {
     const textoBase = normalizarTexto(etapaProjeto) + " " + normalizarTexto(JSON.stringify(dadosProjetoCompleto || {}));
 
@@ -421,7 +459,6 @@ function MapaProjetos() {
     });
   };
 
-  // FILTRAGEM COM LÓGICA DE UNIAO (OU) ENTRE CATEGORIAS
   const projetosFiltrados = projetosComCoordenadas.filter((item) => {
     const temFiltroCategoriaAtivo =
       etapasSelecionadas.length > 0 ||
@@ -453,8 +490,6 @@ function MapaProjetos() {
       item.dadosCompletosProjeto
     );
 
-    // LÓGICA ACUMULATIVA (OU):
-    // Se houver algum filtro ativo, a marcação é mantida no mapa se passar em pelo menos um deles.
     const passaCategoria =
       !temFiltroCategoriaAtivo ||
       (passaEtapa || passaModalidade || passaArea || passaComponente);
@@ -515,6 +550,11 @@ function MapaProjetos() {
           transition: all 0.3s ease;
           border-right: 1px solid #e2e8f0;
         }
+
+        .custom-pin-icon {
+          background: transparent !important;
+          border: none !important;
+        }
       `}</style>
 
       {/* BARRA LATERAL ESQUERDA */}
@@ -534,7 +574,7 @@ function MapaProjetos() {
             {/* BLOCO 1: ESCOLA */}
             <div style={{ backgroundColor: "#f8fafc", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
               <span style={{ fontSize: "13px", fontWeight: "bold", color: "#0284c7", textTransform: "uppercase", display: "block", marginBottom: "14px", letterSpacing: "0.5px" }}>
-                🏫 Informações da Instituição (Planilha de Escolas)
+                🏫 Informações da Instituição
               </span>
 
               <div style={{ marginBottom: "14px" }}>
@@ -565,7 +605,7 @@ function MapaProjetos() {
             {/* BLOCO 2: PROJETO */}
             <div style={{ backgroundColor: "#f0fdf4", padding: "18px", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
               <span style={{ fontSize: "13px", fontWeight: "bold", color: "#166534", textTransform: "uppercase", display: "block", marginBottom: "14px", letterSpacing: "0.5px" }}>
-                💡 Detalhes da Ação Tecnológica (Planilha de Projetos)
+                💡 Detalhes da Ação Tecnológica
               </span>
 
               {projetoSelecionado.etapa && (
@@ -657,15 +697,7 @@ function MapaProjetos() {
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {/* Etapa de Ensino */}
                 <div>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      color: "#475569",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", display: "block", marginBottom: "4px" }}>
                     Etapa de Ensino:
                   </span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -696,15 +728,7 @@ function MapaProjetos() {
 
                 {/* Modalidade de Ensino */}
                 <div>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      color: "#475569",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", display: "block", marginBottom: "4px" }}>
                     Modalidade de Ensino:
                   </span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -735,15 +759,7 @@ function MapaProjetos() {
 
                 {/* Área de Conhecimento */}
                 <div>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      color: "#475569",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", display: "block", marginBottom: "4px" }}>
                     Área de Conhecimento:
                   </span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -774,15 +790,7 @@ function MapaProjetos() {
 
                 {/* Componente Curricular */}
                 <div>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      color: "#475569",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", display: "block", marginBottom: "4px" }}>
                     Componente Curricular:
                   </span>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -971,24 +979,31 @@ function MapaProjetos() {
             />
           )}
 
-          {projetosFiltrados.map((item, index) => (
-            <Marker 
-              key={`${item.lat}-${item.lng}-${index}`} 
-              position={[item.lat, item.lng]}
-              eventHandlers={{
-                click: () => {
-                  setProjetoSelecionado(item);
-                },
-              }}
-            >
-              <Popup>
-                <strong>{item.nomeEscola}</strong> <br />
-                {item.municipio && <span>Município: {item.municipio}<br /></span>}
-                {item.area && <span>Área: {item.area}<br /></span>}
-                <small style={{ color: "#0284c7", fontWeight: "bold" }}>Clique para exibir todos os dados na coluna lateral</small>
-              </Popup>
-            </Marker>
-          ))}
+          {/* RENDERIZAÇÃO DOS PINS COM COR E CONTORNO PERSONALIZADO */}
+          {projetosFiltrados.map((item, index) => {
+            const corPin = obterCorDoPin(item.modalidade, item.etapa);
+            const iconeCustomizado = criarIconePin(corPin);
+
+            return (
+              <Marker 
+                key={`${item.lat}-${item.lng}-${index}`} 
+                position={[item.lat, item.lng]}
+                icon={iconeCustomizado}
+                eventHandlers={{
+                  click: () => {
+                    setProjetoSelecionado(item);
+                  },
+                }}
+              >
+                <Popup>
+                  <strong>{item.nomeEscola}</strong> <br />
+                  {item.municipio && <span>Município: {item.municipio}<br /></span>}
+                  {item.modalidade && <span>Modalidade: {item.modalidade}<br /></span>}
+                  <small style={{ color: "#0284c7", fontWeight: "bold" }}>Clique para abrir a barra lateral com detalhes</small>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
     </div>
