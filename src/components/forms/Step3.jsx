@@ -1,30 +1,5 @@
 import React, { useState } from "react";
-import Select from "react-select";
-
-import {
-  ETAPAS_ENSINO,
-  MODALIDADES_ENSINO,
-  ANOS_SERIES,
-  ANOS_POR_ETAPA,
-  COMPONENTES_CURRICULARES,
-  AREAS_CONHECIMENTO,
-  OFERTAS_ENSINO,
-} from "../../constants/formOptions";
-
-// Importando os arquivos JSON gerados pelo script
-import bnccGeral from "../../data/bnccGeral.json";
-import bnccComputacao from "../../data/bnccComputacao.json";
-
-// Mapeia os dados para o formato aceito pelo react-select { value, label }
-const opcoesGeral = bnccGeral.map((item) => ({
-  value: item.codigo,
-  label: `${item.codigo} - ${item.descricao}`,
-}));
-
-const opcoesComputacao = bnccComputacao.map((item) => ({
-  value: item.codigo,
-  label: `${item.codigo} - ${item.descricao}`,
-}));
+import { TIPOS_PRODUCAO } from "../../constants/formOptions";
 
 export default function Step3({
   formData,
@@ -32,369 +7,532 @@ export default function Step3({
   nextStep,
   prevStep,
 }) {
-  const [outroComponente, setOutroComponente] = useState("");
-  const [outraArea, setOutraArea] = useState("");
-
-  // Função genérica para alternar seleção em listas (Arrays)
-  const handleCheckboxToggle = (campo, valor) => {
-    const listaAtual = Array.isArray(formData[campo]) ? formData[campo] : [];
-    let novaLista;
-
-    if (listaAtual.includes(valor)) {
-      novaLista = listaAtual.filter((item) => item !== valor);
-    } else {
-      novaLista = [...listaAtual, valor];
-    }
-
-    updateFormData({ [campo]: novaLista });
-  };
+  const [erroAnoFim, setErroAnoFim] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validações de seleção mínima
-    if (!formData.etapa_ensino || formData.etapa_ensino.length === 0) {
-      alert("Por favor, selecione pelo menos uma Etapa de Ensino.");
-      return;
-    }
-
-    if (!formData.oferta_ensino || formData.oferta_ensino.length === 0) {
-      alert("Por favor, selecione pelo menos uma Oferta de Ensino.");
-      return;
-    }
-
-    if (!formData.ano_serie || formData.ano_serie.length === 0) {
-      alert("Por favor, selecione pelo menos um Ano / Série.");
-      return;
-    }
-
+    // Validação: Garante que ano_fim não seja anterior a ano_inicio
     if (
-      !formData.modalidade_ensino ||
-      formData.modalidade_ensino.length === 0
+      formData.ano_inicio &&
+      formData.ano_fim &&
+      Number(formData.ano_fim) < Number(formData.ano_inicio)
     ) {
-      alert("Por favor, selecione pelo menos uma Modalidade de Ensino.");
+      setErroAnoFim("O Ano de Fim não pode ser anterior ao Ano de Início.");
       return;
     }
 
-    // Inclui opções informadas nos campos de texto "Outro"
-    // Inclui opções informadas nos campos de texto "Outro"
-    let componentesFinais = [...(formData.disciplinas || [])];
-    if (
-      outroComponente.trim() &&
-      !componentesFinais.includes(outroComponente.trim())
-    ) {
-      componentesFinais.push(outroComponente.trim());
-    }
-
-    let areasFinais = [...(formData.areas_conhecimento || [])];
-    if (outraArea.trim() && !areasFinais.includes(outraArea.trim())) {
-      areasFinais.push(outraArea.trim());
-    }
-
-    updateFormData({
-      disciplinas: componentesFinais,
-      areas_conhecimento: areasFinais,
-    });
-
+    setErroAnoFim("");
     nextStep();
-  };
-
-  // Prepara os valores selecionados de BNCC para o formato do React-Select
-  const valoresGeralSelecionados = opcoesGeral.filter((op) =>
-    (Array.isArray(formData.habilidades_bncc)
-      ? formData.habilidades_bncc
-      : []
-    ).includes(op.value),
-  );
-
-  const valoresComputacaoSelecionados = opcoesComputacao.filter((op) =>
-    (Array.isArray(formData.habilidades_bncc_computacao)
-      ? formData.habilidades_bncc_computacao
-      : []
-    ).includes(op.value),
-  );
-
-  const anosPermitidos = (formData.etapa_ensino || []).flatMap(
-    (etapa) => ANOS_POR_ETAPA[etapa] || [],
-  );
-
-  const customSelectStyles = {
-    control: (base, state) => ({
-      ...base,
-      backgroundColor: "#ffffff",
-      borderWidth: "2px",
-      borderColor: state.isFocused ? "#244231" : "#315740",
-      borderRadius: "0.5rem",
-      padding: "2px",
-      boxShadow: state.isFocused ? "0 0 0 2px rgba(36, 66, 49, 0.3)" : "none",
-      "&:hover": {
-        borderColor: "#244231",
-      },
-    }),
-    placeholder: (base) => ({
-      ...base,
-      color: "#4b5563",
-    }),
-    multiValue: (base) => ({
-      ...base,
-      backgroundColor: "#244231",
-      borderRadius: "0.375rem",
-    }),
-    multiValueLabel: (base) => ({
-      ...base,
-      color: "#ffffff",
-      fontWeight: 600,
-    }),
-    multiValueRemove: (base) => ({
-      ...base,
-      color: "#d9eadf",
-      "&:hover": {
-        backgroundColor: "#162e21",
-        color: "#ffffff",
-      },
-    }),
-    menu: (base) => ({
-      ...base,
-      backgroundColor: "#ffffff",
-      borderRadius: "0.5rem",
-      zIndex: 50,
-    }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? "#244231"
-        : state.isFocused
-          ? "#d9eadf"
-          : "#ffffff",
-      color: state.isSelected ? "#ffffff" : "#111827",
-      fontWeight: 500,
-      cursor: "pointer",
-    }),
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h2 className="text-xl font-bold text-[#122318] border-b-2 border-[#8fb99f] pb-2">
-        Informações do Projeto
+        Informações Específicas do Projeto
       </h2>
 
-      {/* Etapa de Ensino */}
+      {/* Título do Projeto */}
       <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Etapa de Ensino (Selecione quantas forem aplicáveis)
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Título do Projeto / Atividade Científica / Evento Científico
         </label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
-          {ETAPAS_ENSINO.map((etapa) => (
+        <input
+          type="text"
+          value={formData.titulo_projeto || ""}
+          onChange={(e) => updateFormData({ titulo_projeto: e.target.value })}
+          placeholder="Digite o título do projeto"
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Coordenador(a) do projeto */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Coordenador(a) do projeto
+        </label>
+        <input
+          type="text"
+          value={formData.coordenador || ""}
+          onChange={(e) => updateFormData({ coordenador: e.target.value })}
+          placeholder="Nome do coordenador(a) responsável"
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Colaboradores do projeto */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Colaboradores do projeto (Opcional)
+        </label>
+        <input
+          type="text"
+          value={formData.colaboradores || ""}
+          onChange={(e) => updateFormData({ colaboradores: e.target.value })}
+          placeholder="Nomes dos colaboradores"
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Quantitativo de Estudantes Envolvidos */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Quantitativo de Estudantes Envolvidos
+        </label>
+        <input
+          type="number"
+          min="1"
+          value={formData.qtd_estudantes || ""}
+          onChange={(e) => updateFormData({ qtd_estudantes: e.target.value })}
+          placeholder="Ex: 25"
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Quantitativo de Professores Envolvidos */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Quantitativo de Professores Envolvidos
+        </label>
+        <input
+          type="number"
+          min="1"
+          value={formData.qtd_professores || ""}
+          onChange={(e) => updateFormData({ qtd_professores: e.target.value })}
+          placeholder="Ex: 25"
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Descrição do Projeto */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Apresentação do Projeto
+        </label>
+        <textarea
+          rows={4}
+          value={formData.apresentacao_projeto || ""}
+          onChange={(e) =>
+            updateFormData({ apresentacao_projeto: e.target.value })
+          }
+          placeholder="Descreva de forma clara a proposta do projeto..."
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Objetivo */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Objetivos Geral e Específicos
+        </label>
+        <textarea
+          rows={3}
+          value={formData.objetivo || ""}
+          onChange={(e) => updateFormData({ objetivo: e.target.value })}
+          placeholder="Descreva o objetivo principal do projeto..."
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Metodologia */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Metodologia
+        </label>
+        <textarea
+          rows={3}
+          value={formData.metodologia || ""}
+          onChange={(e) => updateFormData({ metodologia: e.target.value })}
+          placeholder="Ex: Aulas práticas, oficinas, pesquisa de campo, uso de kits de robótica..."
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Metodologia Híbrida */}
+      <div className="flex items-center bg-[#a8cbb4] p-3 rounded-lg border-2 border-[#315740] shadow-sm">
+        <input
+          type="checkbox"
+          id="metodologia_hibrida"
+          checked={formData.metodologia_hibrida || false}
+          onChange={(e) =>
+            updateFormData({ metodologia_hibrida: e.target.checked })
+          }
+          className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] rounded focus:ring-[#244231] cursor-pointer"
+        />
+        <label
+          htmlFor="metodologia_hibrida"
+          className="ml-2.5 text-sm font-bold text-[#143021] cursor-pointer select-none"
+        >
+          Utiliza metodologia híbrida (presencial e online)
+        </label>
+      </div>
+
+      {/* 1. Práticas Inclusivas ou de Acessibilidade */}
+      <div className="space-y-2">
+        <label className="block text-sm font-bold text-[#143021]">
+          O projeto contempla práticas inclusivas ou de acessibilidade?
+        </label>
+        <div className="flex items-center space-x-6 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="praticas_inclusivas"
+              value="Sim"
+              checked={formData.praticas_inclusivas === "Sim"}
+              onChange={() => updateFormData({ praticas_inclusivas: "Sim" })}
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Sim</span>
+          </label>
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="praticas_inclusivas"
+              value="Não"
+              checked={formData.praticas_inclusivas === "Não"}
+              onChange={() =>
+                updateFormData({
+                  praticas_inclusivas: "Não",
+                  detalhe_praticas_inclusivas: "",
+                })
+              }
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Não</span>
+          </label>
+        </div>
+
+        {formData.praticas_inclusivas === "Sim" && (
+          <input
+            type="text"
+            value={formData.detalhe_praticas_inclusivas || ""}
+            onChange={(e) =>
+              updateFormData({ detalhe_praticas_inclusivas: e.target.value })
+            }
+            placeholder="Qual(is) prática(s) inclusiva(s) ou de acessibilidade?"
+            required
+            className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm mt-2"
+          />
+        )}
+      </div>
+
+      {/* 2. Situação do Projeto */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Situação do Projeto
+        </label>
+        <div className="flex items-center space-x-6 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
+          {["Em Andamento", "Concluído"].map((situacao) => (
             <label
-              key={etapa}
-              className="flex items-center space-x-2.5 text-sm text-[#143021] font-bold cursor-pointer"
+              key={situacao}
+              className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer"
             >
               <input
-                type="checkbox"
-                checked={(formData.etapa_ensino || []).includes(etapa)}
-                onChange={() => handleCheckboxToggle("etapa_ensino", etapa)}
-                className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+                type="radio"
+                name="situacao_projeto"
+                value={situacao}
+                checked={formData.situacao_projeto === situacao}
+                onChange={() => updateFormData({ situacao_projeto: situacao })}
+                required
+                className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
               />
-              <span>{etapa}</span>
+              <span>{situacao}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Ano / Série */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Ano / Série (Selecione quantos forem aplicáveis)
+      {/* 3. Parceria ou Cooperação Interinstitucional */}
+      <div className="space-y-2">
+        <label className="block text-sm font-bold text-[#143021]">
+          O projeto possui parceria ou cooperação interinstitucional?
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] max-h-40 overflow-y-auto shadow-sm">
-          {ANOS_SERIES.map((ano) => {
-            const habilitado = anosPermitidos.includes(ano);
+        <div className="flex items-center space-x-6 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_parceria"
+              value="Sim"
+              checked={formData.possuir_parceria === "Sim"}
+              onChange={() => updateFormData({ possuir_parceria: "Sim" })}
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Sim</span>
+          </label>
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_parceria"
+              value="Não"
+              checked={formData.possuir_parceria === "Não"}
+              onChange={() =>
+                updateFormData({
+                  possuir_parceria: "Não",
+                  detalhe_parceria: "",
+                })
+              }
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Não</span>
+          </label>
+        </div>
 
-            return (
-              <label
-                key={ano}
-                className={`flex items-center space-x-2.5 text-sm font-bold ${
-                  habilitado
-                    ? "text-[#143021] cursor-pointer"
-                    : "text-[#587363] cursor-not-allowed"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={(formData.ano_serie || []).includes(ano)}
-                  disabled={!habilitado}
-                  onChange={() => handleCheckboxToggle("ano_serie", ano)}
-                  className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] disabled:opacity-40"
-                />
-                <span>{ano}</span>
+        {formData.possuir_parceria === "Sim" && (
+          <input
+            type="text"
+            value={formData.detalhe_parceria || ""}
+            onChange={(e) =>
+              updateFormData({ detalhe_parceria: e.target.value })
+            }
+            placeholder="Informe qual(is) instituição(ões) parceira(s)"
+            required
+            className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm mt-2"
+          />
+        )}
+      </div>
+
+      {/* 4. Financiamento */}
+      <div className="space-y-2">
+        <label className="block text-sm font-bold text-[#143021]">
+          O projeto possui financiamento?
+        </label>
+        <div className="flex items-center space-x-6 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_financiamento"
+              value="Sim"
+              checked={formData.possuir_financiamento === "Sim"}
+              onChange={() => updateFormData({ possuir_financiamento: "Sim" })}
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Sim</span>
+          </label>
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_financiamento"
+              value="Não"
+              checked={formData.possuir_financiamento === "Não"}
+              onChange={() =>
+                updateFormData({
+                  possuir_financiamento: "Não",
+                  detalhe_financiamento: "",
+                })
+              }
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Não</span>
+          </label>
+        </div>
+
+        {formData.possuir_financiamento === "Sim" && (
+          <input
+            type="text"
+            value={formData.detalhe_financiamento || ""}
+            onChange={(e) =>
+              updateFormData({ detalhe_financiamento: e.target.value })
+            }
+            placeholder="Qual a fonte / órgão de financiamento?"
+            required
+            className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm mt-2"
+          />
+        )}
+      </div>
+
+      {/* 5. Produção Acadêmica / Científica */}
+      <div className="space-y-2">
+        <label className="block text-sm font-bold text-[#143021]">
+          O projeto possui alguma produção?
+        </label>
+        <div className="flex items-center space-x-6 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_producao"
+              value="Sim"
+              checked={formData.possuir_producao === "Sim"}
+              onChange={() => updateFormData({ possuir_producao: "Sim" })}
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Sim</span>
+          </label>
+          <label className="flex items-center space-x-2 text-sm text-[#143021] font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="possuir_producao"
+              value="Não"
+              checked={formData.possuir_producao === "Não"}
+              onChange={() =>
+                updateFormData({
+                  possuir_producao: "Não",
+                  producao_titulo: "",
+                  producao_ano: "",
+                  producao_tipo: "",
+                })
+              }
+              required
+              className="w-4 h-4 text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+            />
+            <span>Não</span>
+          </label>
+        </div>
+
+        {/* Sub-campos da Produção caso "Sim" */}
+        {formData.possuir_producao === "Sim" && (
+          <div className="p-4 border-2 border-[#315740] rounded-lg bg-[#d9eadf] space-y-4 mt-2">
+            <div>
+              <label className="block text-sm font-bold text-[#143021] mb-1">
+                Título da Produção
               </label>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Oferta de Ensino */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Oferta de Ensino (Selecione quantas forem aplicáveis)
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
-          {OFERTAS_ENSINO.map((oferta) => (
-            <label
-              key={oferta}
-              className="flex items-center space-x-2.5 text-sm text-[#143021] font-bold cursor-pointer"
-            >
               <input
-                type="checkbox"
-                checked={(formData.oferta_ensino || []).includes(oferta)}
-                onChange={() => handleCheckboxToggle("oferta_ensino", oferta)}
-                className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
-              />
-              <span>{oferta}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Modalidade de Ensino */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Modalidade de Ensino (Selecione quantas forem aplicáveis)
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
-          {MODALIDADES_ENSINO.map((modalidade) => (
-            <label
-              key={modalidade}
-              className="flex items-center space-x-2.5 text-sm text-[#143021] font-bold cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={(formData.modalidade_ensino || []).includes(
-                  modalidade,
-                )}
-                onChange={() =>
-                  handleCheckboxToggle("modalidade_ensino", modalidade)
+                type="text"
+                value={formData.producao_titulo || ""}
+                onChange={(e) =>
+                  updateFormData({ producao_titulo: e.target.value })
                 }
-                className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
+                placeholder="Digite o título da produção..."
+                required
+                className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] bg-white text-gray-900 font-semibold text-sm"
               />
-              <span>{modalidade}</span>
-            </label>
-          ))}
-        </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#143021] mb-1">
+                  Ano da Produção
+                </label>
+                <input
+                  type="number"
+                  min="2000"
+                  max="2030"
+                  value={formData.producao_ano || ""}
+                  onChange={(e) =>
+                    updateFormData({ producao_ano: e.target.value })
+                  }
+                  placeholder="Ex: 2024"
+                  required
+                  className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] bg-white text-gray-900 font-semibold text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-[#143021] mb-1">
+                  Tipo da Produção
+                </label>
+                <select
+                  value={formData.producao_tipo || ""}
+                  onChange={(e) =>
+                    updateFormData({ producao_tipo: e.target.value })
+                  }
+                  required
+                  className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] bg-white text-gray-900 font-semibold text-sm"
+                >
+                  <option value="">Selecione um tipo...</option>
+                  {TIPOS_PRODUCAO.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {tipo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Componentes Curriculares Envolvidos */}
+      {/* Resultados Alcançados */}
       <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Componente Curricular Envolvido (Marque quantos desejar)
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Resultados Esperados ou Alcançados pelo Projeto
         </label>
+        <textarea
+          rows={4}
+          value={formData.resultados || ""}
+          onChange={(e) => updateFormData({ resultados: e.target.value })}
+          placeholder="Descreva os principais impactos e conquistas observados nos estudantes..."
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] max-h-96 overflow-y-auto shadow-sm">
-          {Object.entries(COMPONENTES_CURRICULARES).flatMap(([, componentes]) =>
-            componentes.map((comp) => (
-              <label
-                key={comp}
-                className="flex items-center space-x-2.5 text-sm text-[#143021] font-bold cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={(formData.disciplinas || []).includes(comp)}
-                  onChange={() => handleCheckboxToggle("disciplinas", comp)}
-                  className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
-                />
-                <span>{comp}</span>
-              </label>
-            )),
+      {/* Datas e Periodicidade em Grid de 3 colunas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Ano de Início */}
+        <div>
+          <label className="block text-sm font-bold text-[#143021] mb-1.5">
+            Ano de Início
+          </label>
+          <input
+            type="number"
+            min="2000"
+            max="2030"
+            value={formData.ano_inicio || ""}
+            onChange={(e) => {
+              setErroAnoFim("");
+              updateFormData({ ano_inicio: e.target.value });
+            }}
+            placeholder="Ex: 2024"
+            required
+            className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+          />
+        </div>
+
+        {/* Ano de Fim */}
+        <div>
+          <label className="block text-sm font-bold text-[#143021] mb-1.5">
+            Ano de Fim{" "}
+            <span className="text-gray-700 font-normal text-xs">
+              (Opcional)
+            </span>
+          </label>
+          <input
+            type="number"
+            min="2000"
+            max="2030"
+            value={formData.ano_fim || ""}
+            onChange={(e) => {
+              setErroAnoFim("");
+              updateFormData({ ano_fim: e.target.value });
+            }}
+            placeholder="Ex: 2025"
+            className={`w-full p-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm ${
+              erroAnoFim ? "border-red-600" : "border-[#315740]"
+            }`}
+          />
+          {erroAnoFim && (
+            <p className="mt-1 text-sm font-bold text-red-700">{erroAnoFim}</p>
           )}
         </div>
 
-        <div className="mt-2">
+        {/* Periodicidade */}
+        <div>
+          <label className="block text-sm font-bold text-[#143021] mb-1.5">
+            Periodicidade das Atividades
+          </label>
           <input
             type="text"
-            value={outroComponente}
-            onChange={(e) => setOutroComponente(e.target.value)}
-            placeholder="Outro componente curricular (opcional)"
-            className="w-full p-2.5 text-sm border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm"
+            value={formData.periodicidade || ""}
+            onChange={(e) => updateFormData({ periodicidade: e.target.value })}
+            placeholder="Ex: Semanal, Quinzenal, Mensal"
+            required
+            className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
           />
         </div>
-      </div>
-
-      {/* Áreas de Conhecimento */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-2">
-          Áreas de Conhecimento Envolvidas
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border-2 border-[#315740] p-3 rounded-lg bg-[#a8cbb4] shadow-sm">
-          {AREAS_CONHECIMENTO.map((area) => (
-            <label
-              key={area}
-              className="flex items-center space-x-2.5 text-sm text-[#143021] font-bold cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={(formData.areas_conhecimento || []).includes(area)}
-                onChange={() =>
-                  handleCheckboxToggle("areas_conhecimento", area)
-                }
-                className="w-4 h-4 rounded text-[#244231] bg-white border-2 border-[#315740] focus:ring-[#244231] cursor-pointer"
-              />
-              <span>{area}</span>
-            </label>
-          ))}
-        </div>
-        <div className="mt-2">
-          <input
-            type="text"
-            value={outraArea}
-            onChange={(e) => setOutraArea(e.target.value)}
-            placeholder="Outra área (opcional)"
-            className="w-full p-2.5 text-sm border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm"
-          />
-        </div>
-      </div>
-
-      {/* SELEÇÃO BNCC GERAL */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-1.5">
-          Códigos e Habilidades da BNCC Geral
-        </label>
-        <Select
-          isMulti
-          options={opcoesGeral}
-          value={valoresGeralSelecionados}
-          onChange={(selecionados) => {
-            const codigos = selecionados
-              ? selecionados.map((s) => s.value)
-              : [];
-            updateFormData({ habilidades_bncc: codigos });
-          }}
-          placeholder="Digite para buscar (ex: EF01MA01, Geografia...)"
-          noOptionsMessage={() => "Nenhuma habilidade encontrada"}
-          className="text-sm"
-          styles={customSelectStyles}
-        />
-      </div>
-
-      {/* SELEÇÃO BNCC COMPUTAÇÃO */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-1.5">
-          Códigos e Habilidades da BNCC Computação
-        </label>
-        <Select
-          isMulti
-          options={opcoesComputacao}
-          value={valoresComputacaoSelecionados}
-          onChange={(selecionados) => {
-            const codigos = selecionados
-              ? selecionados.map((s) => s.value)
-              : [];
-            updateFormData({ habilidades_bncc_computacao: codigos });
-          }}
-          placeholder="Digite para buscar (ex: EF01CO01, Algoritmo...)"
-          noOptionsMessage={() => "Nenhuma habilidade encontrada"}
-          className="text-sm"
-          styles={customSelectStyles}
-        />
       </div>
 
       {/* Botões de Navegação */}

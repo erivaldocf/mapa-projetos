@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { LISTA_DIRECS } from "../../constants/dadosMapa";
 
 function LegendaDirec({ onSelectDirec, direcSelecionada }) {
-  const [aberto, setAberto] = useState(true);
+  const [aberto, setAberto] = useState(false);
 
   return (
     <div

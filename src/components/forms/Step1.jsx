@@ -5,6 +5,13 @@ import { DIRECS } from "../../constants/formOptions";
 
 export default function Step1({ formData, updateFormData, escolas, nextStep }) {
   const [erroEscola, setErroEscola] = useState(false);
+  const [erroEmail, setErroEmail] = useState("");
+  const [erroTelefone, setErroTelefone] = useState("");
+
+  // Expressões Regulares de Validação
+  const EMAIL_INSTITUCIONAL_REGEX = /^[a-zA-Z0-9._%+-]+@educar\.rn\.gov\.br$/i;
+  const TELEFONE_REGEX = /^\(\d{2}\) 9\d{4}-\d{4}$/;
+
   // 1. Filtra as escolas pertencentes à DIREC selecionada
   const escolasDaDirec = formData.direc
     ? escolas.filter((item) => item.direc === formData.direc)
@@ -16,20 +23,51 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
   )
     .filter(Boolean)
     .sort();
+
   // 3. Filtra as escolas pertencentes ao Município selecionado
   const escolasFiltradas = formData.municipio
     ? escolasDaDirec.filter((item) => item.municipio === formData.municipio)
     : [];
 
+  // Validação centralizada ao submeter a etapa
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    let temErro = false;
+
+    // Validação da Escola
     if (!formData.inep_escola) {
       setErroEscola(true);
-      return;
+      temErro = true;
+    } else {
+      setErroEscola(false);
     }
 
-    setErroEscola(false);
+    // Validação do Telefone
+    if (!formData.telefone || !TELEFONE_REGEX.test(formData.telefone)) {
+      setErroTelefone("Informe um telefone válido no formato (00) 90000-0000.");
+      temErro = true;
+    } else {
+      setErroTelefone("");
+    }
+
+    // Validação do E-mail Institucional
+    if (
+      !formData.email_institucional ||
+      !EMAIL_INSTITUCIONAL_REGEX.test(formData.email_institucional)
+    ) {
+      setErroEmail(
+        "Insira um e-mail institucional válido terminado em @educar.rn.gov.br",
+      );
+      temErro = true;
+    } else {
+      setErroEmail("");
+    }
+
+    // Se houver algum erro, interrompe a navegação
+    if (temErro) return;
+
+    // Se estiver tudo correto, avança para o próximo passo
     nextStep();
   };
 
@@ -73,6 +111,25 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
       inep_escola: option.value,
       nome_escola: escola?.escola || "",
     });
+  };
+
+  /**
+   * Formata uma string de caracteres numéricos no formato de telefone celular brasileiro.
+   * Exemplo de entrada: "84999999999" -> Saída: "(84) 99999-9999"
+   */
+  const formatarTelefone = (valor) => {
+    if (!valor) return "";
+
+    // 1. Remove qualquer caractere que não seja número
+    const apenasNumeros = valor.replace(/\D/g, "");
+
+    // 2. Limita a 11 dígitos (2 do DDD + 9 do número celular)
+    const apenasNumerosLimitados = apenasNumeros.slice(0, 11);
+
+    // 3. Aplica a máscara (XX) 9XXXX-XXXX
+    return apenasNumerosLimitados
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
   };
 
   return (
@@ -162,10 +219,16 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
               ...base,
               backgroundColor: state.isDisabled ? "#e5e7eb" : "#ffffff",
               borderWidth: "2px",
-              borderColor: erroEscola ? "#dc2626" : state.isFocused ? "#244231" : "#315740",
+              borderColor: erroEscola
+                ? "#dc2626"
+                : state.isFocused
+                  ? "#244231"
+                  : "#315740",
               borderRadius: "0.5rem",
               padding: "2px",
-              boxShadow: state.isFocused ? "0 0 0 2px rgba(36, 66, 49, 0.3)" : "none",
+              boxShadow: state.isFocused
+                ? "0 0 0 2px rgba(36, 66, 49, 0.3)"
+                : "none",
               "&:hover": {
                 borderColor: erroEscola ? "#dc2626" : "#244231",
               },
@@ -190,8 +253,8 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
               backgroundColor: state.isSelected
                 ? "#244231"
                 : state.isFocused
-                ? "#d9eadf"
-                : "#ffffff",
+                  ? "#d9eadf"
+                  : "#ffffff",
               color: state.isSelected ? "#ffffff" : "#111827",
               fontWeight: 500,
               cursor: "pointer",
@@ -199,40 +262,37 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
           }}
         />
         {erroEscola && (
-          <p className="mt-1 text-sm font-bold text-red-700">Selecione uma escola.</p>
+          <p className="mt-1 text-sm font-bold text-red-700">
+            Selecione uma escola.
+          </p>
         )}
-      </div>
-
-      {/* Telefone */}
-      <div>
-        <label className="block text-sm font-bold text-[#143021] mb-1.5">
-          Telefone (de preferência WhatsApp)
-        </label>
-        <input
-          type="tel"
-          value={formData.telefone || ""}
-          onChange={(e) => updateFormData({ telefone: e.target.value })}
-          placeholder="(84) 99999-9999"
-          required
-          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm"
-        />
       </div>
 
       {/* E-mail Institucional */}
       <div>
         <label className="block text-sm font-bold text-[#143021] mb-1.5">
-          E-mail Institucional (@educar.rn.gov.br)
+          E-mail Institucional da Escola(@educar.rn.gov.br)
         </label>
         <input
           type="email"
           value={formData.email_institucional || ""}
-          onChange={(e) =>
-            updateFormData({ email_institucional: e.target.value })
-          }
-          placeholder="exemplo@educar.rn.gov.br"
+          onChange={(e) => {
+            setErroEmail("");
+            updateFormData({
+              email_institucional: e.target.value.toLowerCase().trim(),
+            });
+          }}
+          placeholder="escola@educar.rn.gov.br"
           required
-          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm"
+          pattern="[a-zA-Z0-9._%+-]+@educar\.rn\.gov\.br"
+          title="O e-mail deve terminar obrigatoriamente com @educar.rn.gov.br"
+          className={`w-full p-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm ${
+            erroEmail ? "border-red-600" : "border-[#315740]"
+          }`}
         />
+        {erroEmail && (
+          <p className="mt-1 text-sm font-bold text-red-700">{erroEmail}</p>
+        )}
       </div>
 
       {/* Nome do Gestor */}
@@ -248,6 +308,32 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
           required
           className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm"
         />
+      </div>
+
+      {/* Telefone */}
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Telefone do gestor (de preferência WhatsApp)
+        </label>
+        <input
+          type="tel"
+          value={formData.telefone || ""}
+          onChange={(e) => {
+            setErroTelefone("");
+            updateFormData({ telefone: formatarTelefone(e.target.value) });
+          }}
+          placeholder="(84) 99999-9999"
+          required
+          maxLength={15}
+          pattern="\(\d{2}\) 9\d{4}-\d{4}"
+          title="Insira o telefone no formato correto: (00) 90000-0000"
+          className={`w-full p-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm ${
+            erroTelefone ? "border-red-600" : "border-[#315740]"
+          }`}
+        />
+        {erroTelefone && (
+          <p className="mt-1 text-sm font-bold text-red-700">{erroTelefone}</p>
+        )}
       </div>
 
       {/* Botão Próximo */}

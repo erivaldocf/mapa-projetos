@@ -18,9 +18,9 @@ export const DIRECS = [
 ];
 
 export const ETAPAS_ENSINO = [
-  "ENSINO FUNDAMENTAL - ANOS INICIAIS",
-  "ENSINO FUNDAMENTAL - ANOS FINAIS",
-  "ENSINO MÉDIO",
+  "Ensino Fundamental - Anos Iniciais",
+  "Ensino Fundamental - Anos Finais",
+  "Ensino Médio",
 ];
 
 export const OFERTAS_ENSINO = [
@@ -30,11 +30,11 @@ export const OFERTAS_ENSINO = [
 ];
 
 export const MODALIDADES_ENSINO = [
+  "Regular",
   "Educação de Jovens e Adultos (EJA)",
   "Educação Profissional e Tecnológica (EPT)",
   "Educação Especial",
-  "Educação do Campo, Indígena e Quilombola",
-  "Educação a Distância (EaD)",
+  "Educação do Campo, Educação Quilombola ou Educação Indígena",
 ];
 
 export const ANOS_SERIES = [
@@ -53,7 +53,7 @@ export const ANOS_SERIES = [
 ];
 
 export const ANOS_POR_ETAPA = {
-  "ENSINO FUNDAMENTAL - ANOS INICIAIS": [
+  "Ensino Fundamental - Anos Iniciais": [
     "1º EF",
     "2º EF",
     "3º EF",
@@ -61,10 +61,14 @@ export const ANOS_POR_ETAPA = {
     "5º EF",
   ],
 
-  "ENSINO FUNDAMENTAL - ANOS FINAIS": ["6º EF", "7º EF", "8º EF", "9º EF"],
+  "Ensino Fundamental - Anos Finais": ["6º EF", "7º EF", "8º EF", "9º EF"],
 
-  "ENSINO MÉDIO": ["1ª EM", "2ª EM", "3ª EM"],
+  "Ensino Médio": ["1ª EM", "2ª EM", "3ª EM"],
 };
+
+export const JORNADA_ESCOLAR = ["Tempo Integral", "Tempo Parcial"];
+
+export const TURNO_ESCOLAR = ["Diurno", "Noturno"];
 
 export const COMPONENTES_CURRICULARES = {
   Linguagens: [
@@ -86,8 +90,30 @@ export const COMPONENTES_CURRICULARES = {
   "Filosofia e Sociologia": ["Filosofia", "Sociologia"],
 };
 export const AREAS_CONHECIMENTO = [
-  "Linguagens",
-  "Matemática",
-  "Ciências da Natureza",
-  "Ciências Humanas",
+  "Linguagens (e suas Tecnologias)",
+  "Matemática (e suas Tecnologias)",
+  "Ciências da Natureza (e suas Tecnologias)",
+  "Ciências Humanas (e Sociais Aplicadas)",
+];
+
+export const TEMAS_TRANSVERSAIS = [
+  "Meio Ambiente",
+  "Economia",
+  "Saúde",
+  "Cidadania e Civismo",
+  "Multiculturalismo",
+  "Ciência e Tecnologia",
+];
+
+export const EIXOS_BNCC_COMPUTACAO = [
+  "Pensamento Computacional",
+  "Mundo Digital",
+  "Cultura Digital",
+];
+
+export const TIPOS_PRODUCAO = [
+  "Apresentação de trabalho",
+  "Artigo científico",
+  "Material didático",
+  "Outro(a)",
 ];

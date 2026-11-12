@@ -86,26 +86,26 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             💡 Detalhes da Ação Tecnológica
           </span>
           {/* Nome do projeto */}
-          {projetoSelecionado.nome_projeto && (
+          {projetoSelecionado.titulo_projeto && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
-                Nome do Projeto:
+                Título do Projeto:
               </label>
 
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
-                {projetoSelecionado.nome_projeto}
+                {projetoSelecionado.titulo_projeto}
               </p>
             </div>
           )}
           {/* Responsável pelo projeto */}
-          {projetoSelecionado.responsavel && (
+          {projetoSelecionado.coordenador && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
-                Responsável:
+                Coordenador do Projeto:
               </label>
 
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
-                {projetoSelecionado.responsavel}
+                {projetoSelecionado.coordenador}
               </p>
             </div>
           )}
@@ -134,14 +134,14 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
           {/* Descrição do projeto */}
-          {projetoSelecionado.descricao_projeto && (
+          {projetoSelecionado.apresentacao_projeto && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
-                Descrição do Projeto:
+                Apresentação do Projeto:
               </label>
 
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
-                {projetoSelecionado.descricao_projeto}
+                {projetoSelecionado.apresentacao_projeto}
               </p>
             </div>
           )}

@@ -11,7 +11,6 @@ import {
 import LegendaDirec from "./LegendaDirec";
 import PainelFiltros from "./PainelFiltros";
 import DetalhesEscola from "./DetalhesEscola";
-import { supabase } from "../../services/supabaseClient";
 import {
   LISTA_DIRECS,
   normalizarTexto,
@@ -75,7 +74,7 @@ function MapaProjetos() {
   const [componentesSelecionados, setComponentesSelecionados] = useState([]);
   const [metodologiaHibridaSelecionada, setMetodologiaHibridaSelecionada] =
     useState(false);
-  const [painelFiltrosAberto, setPainelFiltrosAberto] = useState(true);
+  const [painelFiltrosAberto, setPainelFiltrosAberto] = useState(false);
 
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
 
@@ -104,27 +103,16 @@ function MapaProjetos() {
       })
       .catch((err) => console.error("Erro ao carregar GeoJSON:", err));
 
-    // 2. Busca projetos e escolas cruzados do Supabase
-    async function carregarDadosSupabase() {
+    // 2. Busca projetos e escolas cruzados da nossa API Backend
+    async function carregarDadosAPI() {
       setCarregando(true);
       try {
-        const { data, error } = await supabase.from("projetos").select(`
-            *,
-            escolas (
-              inep,
-              direc,
-              municipio,
-              escola,
-              latitude,
-              longitude
-            )
-          `);
-
-        if (error) {
-          console.error("Erro ao buscar dados do Supabase:", error);
-          setCarregando(false);
-          return;
+        const response = await fetch("http://localhost:3001/api/projetos");
+        if (!response.ok) {
+          throw new Error("Erro ao buscar dados da API.");
         }
+
+        const data = await response.json();
 
         const listaFormatada = data
           .map((projeto) => {
@@ -136,8 +124,6 @@ function MapaProjetos() {
 
             if (isNaN(lat) || isNaN(lng)) return null;
 
-            // Mapeamento dos campos salvos no Supabase
-            // (Ajuste as chaves abaixo caso as colunas na sua tabela tenham nomes como 'etapa_ensino', etc)
             return {
               ...projeto,
               nomeEscola: escola.escola || `Escola INEP ${projeto.inep_escola}`,
@@ -194,13 +180,13 @@ function MapaProjetos() {
 
         setProjetosComCoordenadas(listaFormatada);
       } catch (err) {
-        console.error("Erro inesperado ao carregar Supabase:", err);
+        console.error("Erro inesperado ao carregar API:", err);
       } finally {
         setCarregando(false);
       }
     }
 
-    carregarDadosSupabase();
+    carregarDadosAPI();
   }, [URL_IBGE_RN]);
 
   const getEstiloMunicipio = (feature) => {
@@ -406,7 +392,7 @@ function MapaProjetos() {
     <div className="relative w-full h-screen flex flex-row overflow-hidden">
       {carregando && (
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs z-[2000] flex items-center justify-center text-white font-bold text-lg">
-          Carregando projetos do Supabase...
+          Carregando projetos do servidor...
         </div>
       )}
 

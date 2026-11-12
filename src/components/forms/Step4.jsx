@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { supabase } from "../../services/supabaseClient";
 
 export default function Step4({
   formData,
@@ -23,69 +22,76 @@ export default function Step4({
     setLoading(true);
     setErroMsg("");
 
+    const arrayParaString = (valor) =>
+      Array.isArray(valor) ? valor.join(", ") : valor || "";
+
     try {
-      // Monta o objeto com os nomes exatos das colunas do Supabase
       const payload = {
         inep_escola: Number(formData.inep_escola),
-        nome_gestor: formData.nome_gestor,
-        email_institucional: formData.email_institucional,
-        telefone: formData.telefone,
+        nome_gestor: formData.nome_gestor || "",
+        email_institucional: formData.email_institucional || "",
+        telefone: formData.telefone || "",
 
-        nome_projeto: formData.nome_projeto,
-        responsavel: formData.responsavel,
-        link_projeto: formData.link_projeto || "",
-        etapa_ensino: Array.isArray(formData.etapa_ensino)
-          ? formData.etapa_ensino.join(", ")
-          : formData.etapa_ensino || "",
+        modalidade_ensino: arrayParaString(formData.modalidade_ensino),
+        etapa_ensino: arrayParaString(formData.etapa_ensino),
+        ano_serie: arrayParaString(formData.ano_serie),
+        jornada_escolar: formData.jornada_escolar || "",
+        turno_escolar: formData.turno_escolar || "",
+        oferta_ensino: arrayParaString(formData.oferta_ensino),
+        disciplinas: arrayParaString(formData.disciplinas),
+        areas_conhecimento: arrayParaString(formData.areas_conhecimento),
+        temas_transversais: arrayParaString(formData.temas_transversais),
+        habilidades_bncc: arrayParaString(formData.habilidades_bncc),
+        eixos_bncc_computacao: arrayParaString(formData.eixos_bncc_computacao),
+        habilidades_bncc_computacao: arrayParaString(
+          formData.habilidades_bncc_computacao,
+        ),
 
-        oferta_ensino: Array.isArray(formData.oferta_ensino)
-          ? formData.oferta_ensino.join(", ")
-          : formData.oferta_ensino || "",
-
-        modalidade_ensino: Array.isArray(formData.modalidade_ensino)
-          ? formData.modalidade_ensino.join(", ")
-          : formData.modalidade_ensino || "",
-
-        ano_serie: Array.isArray(formData.ano_serie)
-          ? formData.ano_serie.join(", ")
-          : formData.ano_serie || "",
+        titulo_projeto: formData.titulo_projeto || "",
+        coordenador: formData.coordenador || "",
+        colaboradores: formData.colaboradores || "",
         qtd_estudantes: Number(formData.qtd_estudantes) || 0,
         qtd_professores: Number(formData.qtd_professores) || 0,
-
-        // Converte os arrays de disciplinas e áreas em texto (separados por vírgula)
-        disciplinas: Array.isArray(formData.disciplinas)
-          ? formData.disciplinas.join(", ")
-          : formData.disciplinas || "",
-        areas_conhecimento: Array.isArray(formData.areas_conhecimento)
-          ? formData.areas_conhecimento.join(", ")
-          : formData.areas_conhecimento || "",
-
-        habilidades_bncc: Array.isArray(formData.habilidades_bncc)
-          ? formData.habilidades_bncc.join(", ")
-          : formData.habilidades_bncc || "",
-
-        habilidades_bncc_computacao: Array.isArray(
-          formData.habilidades_bncc_computacao,
-        )
-          ? formData.habilidades_bncc_computacao.join(", ")
-          : formData.habilidades_bncc_computacao || "",
-        descricao_projeto: formData.descricao_projeto,
-        metodologia: formData.metodologia,
+        apresentacao_projeto: formData.apresentacao_projeto || "",
+        objetivo: formData.objetivo || "",
+        metodologia: formData.metodologia || "",
         metodologia_hibrida: Boolean(formData.metodologia_hibrida),
-        objetivo: formData.objetivo,
+        praticas_inclusivas: formData.praticas_inclusivas || "",
+        detalhe_praticas_inclusivas: formData.detalhe_praticas_inclusivas || "",
+        situacao_projeto: formData.situacao_projeto || "",
+        possuir_parceria: formData.possuir_parceria || "",
+        detalhe_parceria: formData.detalhe_parceria || "",
+        possuir_financiamento: formData.possuir_financiamento || "",
+        detalhe_financiamento: formData.detalhe_financiamento || "",
+        possuir_producao: formData.possuir_producao || "",
+        producao_titulo: formData.producao_titulo || "",
+        producao_ano: formData.producao_ano
+          ? Number(formData.producao_ano)
+          : null,
+        producao_tipo: formData.producao_tipo || "",
+        resultados: formData.resultados || "",
         ano_inicio: Number(formData.ano_inicio) || new Date().getFullYear(),
         ano_fim: formData.ano_fim ? Number(formData.ano_fim) : null,
-        periodicidade: formData.periodicidade,
+        periodicidade: formData.periodicidade || "",
 
-        resultados: formData.resultados || "",
-        // Nome correto da coluna conforme criado no Supabase:
         concorda_lgpd: Boolean(formData.concorda_lgpd),
+        link_projeto: formData.link_projeto || "",
       };
 
-      // Envia os dados para a tabela 'projetos'
-      const { error } = await supabase.from("projetos").insert([payload]);
+      const response = await fetch("http://localhost:3001/api/projetos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Ocorreu um erro ao enviar os dados.",
+        );
+      }
 
       onSuccess();
     } catch (err) {

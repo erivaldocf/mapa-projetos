@@ -1,10 +1,12 @@
+// src/pages/FormPage.jsx
+
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../services/supabaseClient";
 import Step1 from "../components/forms/Step1";
 import Step2 from "../components/forms/Step2";
 import Step3 from "../components/forms/Step3";
 import Step4 from "../components/forms/Step4";
 import backgroundForm from "../assets/background_form.jpg";
+import { INITIAL_FORM_DATA } from "../constants/InitialFormData";
 
 export default function FormPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -13,14 +15,20 @@ export default function FormPage() {
   const [enviadoComSucesso, setEnviadoComSucesso] = useState(false);
   const formRef = useRef(null);
 
+  // Estado inicializado com a constante externa
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+
   useEffect(() => {
+    // Busca a lista de escolas diretamente da sua API Backend (PostgreSQL)
     async function fetchEscolas() {
       try {
-        const { data, error } = await supabase
-          .from("escolas")
-          .select("inep, escola, direc, municipio");
+        const response = await fetch("http://localhost:3001/api/escolas");
 
-        if (error) throw error;
+        if (!response.ok) {
+          throw new Error("Falha ao carregar escolas da API local.");
+        }
+
+        const data = await response.json();
         setEscolas(data || []);
       } catch (err) {
         console.error("Erro ao carregar escolas:", err.message);
@@ -41,47 +49,15 @@ export default function FormPage() {
     }
   }, [currentStep]);
 
-  const [formData, setFormData] = useState({
-    // Step 1
-    direc: "",
-    municipio: "",
-    inep_escola: "",
-    nome_escola: "",
-    telefone: "",
-    email_institucional: "",
-    nome_gestor: "",
-    // Step 2
-    nome_projeto: "",
-    responsavel: "",
-    qtd_professores: "",
-    etapa_ensino: [],
-    objetivo: "",
-    modalidade_ensino: [],
-    ano_serie: [],
-    qtd_estudantes: "",
-    disciplinas: [],
-    areas_conhecimento: [],
-    habilidades_bncc: [],
-    habilidades_bncc_computacao: [],
-    link_projeto: "",
-    metodologia_hibrida: false,
-    // Step 3
-    tipo_projeto: "",
-    descricao_projeto: "",
-    metodologia: "",
-    ano_inicio: "",
-    ano_fim: "",
-    periodicidade: "",
-    oferta_ensino: [],
-    // Step 4
-    resultados: "",
-    concorda_lgpd: false,
-    fotos_arquivos: [],
-    descricao_fotos: "",
-  });
-
   const updateFormData = (fields) => {
     setFormData((prev) => ({ ...prev, ...fields }));
+  };
+
+  // Redefine o formulário para o estado inicial sem recarregar a página
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_DATA);
+    setCurrentStep(1);
+    setEnviadoComSucesso(false);
   };
 
   const nextStep = () => setCurrentStep((prev) => prev + 1);
@@ -95,10 +71,10 @@ export default function FormPage() {
     );
   }
 
-  // Tela exibida após o salvamento no Supabase
+  // Tela exibida após o envio com sucesso
   if (enviadoComSucesso) {
     return (
-      <div 
+      <div
         className="w-full h-full p-4 flex items-center justify-center bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${backgroundForm})` }}
       >
@@ -113,7 +89,7 @@ export default function FormPage() {
             O projeto foi registrado com sucesso no banco de dados.
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={resetForm}
             className="w-full py-2.5 bg-[#244231] text-white font-semibold rounded-lg hover:bg-[#162e21] transition-all cursor-pointer shadow-md"
           >
             Cadastrar Novo Projeto
@@ -124,13 +100,12 @@ export default function FormPage() {
   }
 
   return (
-    <div 
+    <div
       className="w-full h-full p-4 md:p-6 flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${backgroundForm})` }}
     >
-      {/* Card do Formulário com Limite de Altura e Destaque */}
       <div className="max-w-3xl w-full bg-[#b8d1c2] text-[#122318] rounded-2xl shadow-2xl border-2 border-[#244231] flex flex-col max-h-full">
-        {/* Barra de Progresso (Fixa no topo do card) */}
+        {/* Barra de Progresso */}
         <div className="p-6 pb-4 border-b border-[#a3c4b0] flex-none bg-[#abc7b5] rounded-t-2xl">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs font-bold inline-block py-1 px-3 uppercase rounded-full text-[#122318] bg-[#97bfa7] border border-[#6b997e]">
@@ -145,7 +120,7 @@ export default function FormPage() {
           </div>
         </div>
 
-        {/* ÁREA DO PASSO COM BARRA DE ROLAGEM */}
+        {/* Passo do formulário */}
         <div ref={formRef} className="p-6 md:p-8 flex-1 overflow-y-auto">
           {currentStep === 1 && (
             <Step1
