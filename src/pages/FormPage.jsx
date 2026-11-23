@@ -7,6 +7,7 @@ import Step3 from "../components/forms/Step3";
 import Step4 from "../components/forms/Step4";
 import backgroundForm from "../assets/background_form.jpg";
 import { INITIAL_FORM_DATA } from "../constants/InitialFormData";
+import { listarEscolas } from "../services/api";
 
 export default function FormPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -19,16 +20,10 @@ export default function FormPage() {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   useEffect(() => {
-    // Busca a lista de escolas diretamente da sua API Backend (PostgreSQL)
+    // Busca a lista de escolas usando o serviço centralizado
     async function fetchEscolas() {
       try {
-        const response = await fetch("http://localhost:3001/api/escolas");
-
-        if (!response.ok) {
-          throw new Error("Falha ao carregar escolas da API local.");
-        }
-
-        const data = await response.json();
+        const data = await listarEscolas();
         setEscolas(data || []);
       } catch (err) {
         console.error("Erro ao carregar escolas:", err.message);

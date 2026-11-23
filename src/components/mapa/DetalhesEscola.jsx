@@ -3,8 +3,14 @@ import React from "react";
 const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
   if (!projetoSelecionado) return null;
 
+  const linkValido =
+    projetoSelecionado.link_projeto &&
+    /^https?:\/\//i.test(projetoSelecionado.link_projeto.trim())
+      ? projetoSelecionado.link_projeto.trim()
+      : null;
+
   return (
-    <div className="w-full md:w-1/3 min-w-[360px] h-screen bg-white shadow-2xl z-[1010] flex flex-col font-sans transition-all duration-300 border-r border-slate-200">
+    <div className="w-full md:w-1/3 min-w-0 sm:min-w-[360px] h-screen bg-white shadow-2xl z-[1010] flex flex-col font-sans transition-all duration-300 border-r border-slate-200">
       {/* Cabeçalho */}
       <div className="p-4 px-5 bg-slate-900 text-white flex justify-between items-center">
         <span className="text-base font-bold tracking-wide">
@@ -21,58 +27,49 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
       {/* Conteúdo com Scroll */}
       <div className="p-6 overflow-y-auto flex flex-col gap-5">
         {/* BLOCO 1: ESCOLA */}
-
         <div className="bg-slate-50 p-4.5 rounded-xl border border-slate-200">
           <span className="text-xs font-bold text-sky-600 uppercase tracking-wider block mb-3.5">
             🏫 Informações da Instituição
           </span>
 
-          {/* Nome */}
           {projetoSelecionado.nomeEscola && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Nome da Escola:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.nomeEscola}
               </p>
             </div>
           )}
 
-          {/* Município */}
           {projetoSelecionado.municipio && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Município:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.municipio}
               </p>
             </div>
           )}
 
-          {/* INEP */}
           {projetoSelecionado.dadosCompletosEscola?.inep && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 INEP:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.dadosCompletosEscola.inep}
               </p>
             </div>
           )}
 
-          {/* DIREC */}
           {projetoSelecionado.dadosCompletosEscola?.direc && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 DIREC:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.dadosCompletosEscola.direc}
               </p>
@@ -85,91 +82,98 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
           <span className="text-xs font-bold text-sky-600 uppercase tracking-wider block mb-3.5">
             💡 Detalhes da Ação Tecnológica
           </span>
-          {/* Nome do projeto */}
+
           {projetoSelecionado.titulo_projeto && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Título do Projeto:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.titulo_projeto}
               </p>
             </div>
           )}
-          {/* Responsável pelo projeto */}
+
           {projetoSelecionado.coordenador && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Coordenador do Projeto:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.coordenador}
               </p>
             </div>
           )}
-          {/* Quantidade de professores */}
-          {projetoSelecionado.qtd_professores !== undefined && (
-            <div className="mb-3.5">
-              <label className="text-[12px] text-slate-500 font-bold uppercase">
-                Quantidade de Professores:
-              </label>
 
-              <p className="m-0 mt-0.5 text-slate-700 text-sm">
-                {projetoSelecionado.qtd_professores}
-              </p>
-            </div>
-          )}
-          {/* Quantidade de alunos */}
-          {projetoSelecionado.qtd_estudantes !== undefined && (
-            <div className="mb-3.5">
-              <label className="text-[12px] text-slate-500 font-bold uppercase">
-                Quantidade de Estudantes:
-              </label>
+          {projetoSelecionado.qtd_professores != null &&
+            projetoSelecionado.qtd_professores !== "" && (
+              <div className="mb-3.5">
+                <label className="text-[12px] text-slate-500 font-bold uppercase">
+                  Quantidade de Professores:
+                </label>
+                <p className="m-0 mt-0.5 text-slate-700 text-sm">
+                  {projetoSelecionado.qtd_professores}
+                </p>
+              </div>
+            )}
 
-              <p className="m-0 mt-0.5 text-slate-700 text-sm">
-                {projetoSelecionado.qtd_estudantes}
-              </p>
-            </div>
-          )}
-          {/* Descrição do projeto */}
+          {projetoSelecionado.qtd_estudantes != null &&
+            projetoSelecionado.qtd_estudantes !== "" && (
+              <div className="mb-3.5">
+                <label className="text-[12px] text-slate-500 font-bold uppercase">
+                  Quantidade de Estudantes:
+                </label>
+                <p className="m-0 mt-0.5 text-slate-700 text-sm">
+                  {projetoSelecionado.qtd_estudantes}
+                </p>
+              </div>
+            )}
+
           {projetoSelecionado.apresentacao_projeto && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Apresentação do Projeto:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.apresentacao_projeto}
               </p>
             </div>
           )}
-          {/* Objetivo */}
+
+          {/* Palavras-chave */}
+          {projetoSelecionado.palavras_chave && (
+            <div className="mb-3.5">
+              <label className="text-[12px] text-slate-500 font-bold uppercase">
+                Palavras-chave:
+              </label>
+              <p className="m-0 mt-0.5 text-slate-700 text-sm">
+                {projetoSelecionado.palavras_chave}
+              </p>
+            </div>
+          )}
+
           {projetoSelecionado.objetivo && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Objetivo:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.objetivo}
               </p>
             </div>
           )}
-          {/* Metodologia */}
+
           {projetoSelecionado.metodologia && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Metodologia:
               </label>
-
               <p className="m-0 mt-0.5 text-slate-700 text-sm">
                 {projetoSelecionado.metodologia}
               </p>
             </div>
           )}
-          {/* Resultados */}
+
           {projetoSelecionado.resultados && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -181,7 +185,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Ano de Inicio */}
           {projetoSelecionado.ano_inicio && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -193,7 +196,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Ano de Fim */}
           {projetoSelecionado.ano_fim && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -205,7 +207,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Periodicidade */}
           {projetoSelecionado.periodicidade && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -217,7 +218,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Etapa de Ensino */}
           {projetoSelecionado.etapa_ensino && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -229,7 +229,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Ano / Serie */}
           {projetoSelecionado.ano_serie && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -241,7 +240,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Oferta de Ensino */}
           {projetoSelecionado.oferta_ensino && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -253,7 +251,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Modalidade */}
           {projetoSelecionado.modalidade && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -265,7 +262,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Componente Curricular */}
           {projetoSelecionado.componente && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -277,7 +273,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Área do Conhecimento */}
           {projetoSelecionado.area && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -289,7 +284,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Codigos da BNCC */}
           {projetoSelecionado.habilidades_bncc && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -301,7 +295,6 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Codigos da BNCC Computação */}
           {projetoSelecionado.habilidades_bncc_computacao && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
@@ -313,20 +306,19 @@ const DetalhesEscola = ({ projetoSelecionado, onClose }) => {
             </div>
           )}
 
-          {/* Link do projeto */}
-          {projetoSelecionado.link_projeto && (
+          {linkValido && (
             <div className="mb-3.5">
               <label className="text-[12px] text-slate-500 font-bold uppercase">
                 Link do Projeto:
               </label>
-              <p className="m-0 mt-0.5 text-slate-700 text-sm">
+              <p className="m-0 mt-0.5 text-slate-700 text-sm break-all">
                 <a
-                  href={projetoSelecionado.link_projeto}
+                  href={linkValido}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
+                  className="text-blue-600 hover:underline"
                 >
-                  {projetoSelecionado.link_projeto}
+                  {linkValido}
                 </a>
               </p>
             </div>

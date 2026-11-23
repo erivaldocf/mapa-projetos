@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  listarProjetosPendentes,
+  atualizarStatusProjeto,
+} from "../services/api";
 
 /**
  * Componente AdminPage
@@ -8,80 +12,49 @@ import { useNavigate } from "react-router-dom";
 export default function AdminPage() {
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [projetoSelecionado, setProjetoSelecionado] = useState(null); // Projeto exibido no Modal
+  const [enviandoAcao, setEnviandoAcao] = useState(false);
+  const [projetoSelecionado, setProjetoSelecionado] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const navigate = useNavigate();
 
-  // Carrega informações do usuário logado e busca as solicitações pendentes
   useEffect(() => {
-    const usuarioSalvo = localStorage.getItem("usuario_mapeamento");
-    if (usuarioSalvo) {
-      setUsuario(JSON.parse(usuarioSalvo));
+    try {
+      const usuarioSalvo = localStorage.getItem("usuario_mapeamento");
+      if (usuarioSalvo) {
+        setUsuario(JSON.parse(usuarioSalvo));
+      }
+    } catch {
+      localStorage.removeItem("usuario_mapeamento");
     }
+
     buscarSolicitacoesPendentes();
   }, []);
 
-  // Busca lista de solicitações pendentes do backend enviando o Token JWT
   const buscarSolicitacoesPendentes = async () => {
     setCarregando(true);
     try {
-      const token = localStorage.getItem("token_mapeamento");
-
-      const resposta = await fetch(
-        "http://localhost:3001/api/admin/projetos/pendentes",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Passa o token no cabeçalho para o backend filtrar a DIREC
-          },
-        },
-      );
-
-      if (resposta.ok) {
-        const dados = await resposta.json();
-        setSolicitacoes(dados);
-      } else {
-        console.error("Erro ao carregar solicitações:", resposta.statusText);
-      }
+      const dados = await listarProjetosPendentes();
+      setSolicitacoes(dados);
     } catch (erro) {
-      console.error("Erro ao carregar solicitações:", erro);
+      console.error("Erro ao carregar solicitações:", erro.message);
     } finally {
       setCarregando(false);
     }
   };
 
-  // Atualiza o status do projeto para 'aprovado' ou 'recusado'
   const handleAlterarStatus = async (id, novoStatus) => {
+    setEnviandoAcao(true);
     try {
-      const token = localStorage.getItem("token_mapeamento");
-
-      const resposta = await fetch(
-        `http://localhost:3001/api/projetos/${id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Autentica a ação no backend
-          },
-          body: JSON.stringify({ status: novoStatus }),
-        },
-      );
-
-      if (resposta.ok) {
-        // Fecha o modal e recarrega a lista
-        setProjetoSelecionado(null);
-        buscarSolicitacoesPendentes();
-      } else {
-        const erroDados = await resposta.json();
-        alert(erroDados.error || "Erro ao atualizar o status do projeto.");
-      }
+      await atualizarStatusProjeto(id, novoStatus);
+      setProjetoSelecionado(null);
+      buscarSolicitacoesPendentes();
     } catch (erro) {
-      console.error("Erro ao enviar alteração:", erro);
+      alert(erro.message || "Erro ao atualizar o status do projeto.");
+    } finally {
+      setEnviandoAcao(false);
     }
   };
 
-  // Encerra a sessão do administrador
   const handleLogout = () => {
     localStorage.removeItem("token_mapeamento");
     localStorage.removeItem("usuario_mapeamento");
@@ -228,7 +201,8 @@ export default function AdminPage() {
               </div>
               <button
                 onClick={() => setProjetoSelecionado(null)}
-                className="text-slate-400 hover:text-white text-lg font-bold"
+                disabled={enviandoAcao}
+                className="text-slate-400 hover:text-white text-lg font-bold disabled:opacity-50"
               >
                 ✕
               </button>
@@ -280,6 +254,15 @@ export default function AdminPage() {
               </div>
               <div>
                 <strong className="block text-slate-500 uppercase mb-1">
+                  Palavras-chave:
+                </strong>
+                <p className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-600">
+                  {projetoSelecionado.palavras_chave ||
+                    "Nenhuma palavra-chave informada."}
+                </p>
+              </div>
+              <div>
+                <strong className="block text-slate-500 uppercase mb-1">
                   Objetivo do Projeto:
                 </strong>
                 <p className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-600">
@@ -318,21 +301,25 @@ export default function AdminPage() {
             {/* Rodapé do Modal com Botões de Ação */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
               <button
+                disabled={enviandoAcao}
                 onClick={() =>
                   handleAlterarStatus(projetoSelecionado.id, "recusado")
                 }
-                className="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-5 py-2.5 rounded-xl transition"
+                className="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-5 py-2.5 rounded-xl transition disabled:opacity-50"
               >
-                Recusar
+                {enviandoAcao ? "Processando..." : "Recusar"}
               </button>
 
               <button
+                disabled={enviandoAcao}
                 onClick={() =>
                   handleAlterarStatus(projetoSelecionado.id, "aprovado")
                 }
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-md"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition shadow-md disabled:opacity-50"
               >
-                ✓ Aceitar (Virar PIN no Mapa)
+                {enviandoAcao
+                  ? "Processando..."
+                  : "✓ Aceitar (Virar PIN no Mapa)"}
               </button>
             </div>
           </div>

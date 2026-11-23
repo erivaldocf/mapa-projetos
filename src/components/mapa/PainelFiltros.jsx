@@ -30,7 +30,11 @@ function PainelFiltros({
     metodologiaHibridaSelecionada;
 
   return (
-    <div className="bg-white/95 p-3 px-3.5 rounded-lg shadow-md w-[290px] font-sans">
+    <div
+      className="bg-white/95 p-3 px-3.5 rounded-lg shadow-md w-[290px] font-sans"
+      onMouseDown={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
+    >
       <div
         className={`flex justify-between items-center cursor-pointer ${
           painelFiltrosAberto ? "mb-2.5" : "mb-0"
@@ -57,9 +61,10 @@ function PainelFiltros({
                 const ativa = etapasSelecionadas.includes(etapa);
                 return (
                   <button
+                    type="button"
                     key={etapa}
                     onClick={() => toggleEtapa(etapa)}
-                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all ${
+                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all cursor-pointer ${
                       ativa
                         ? "border-sky-600 bg-sky-600 text-white font-bold"
                         : "border-sky-600 bg-white text-sky-600 hover:bg-sky-50"
@@ -82,9 +87,10 @@ function PainelFiltros({
                 const ativa = modalidadesSelecionadas.includes(modalidade);
                 return (
                   <button
+                    type="button"
                     key={modalidade}
                     onClick={() => toggleModalidade(modalidade)}
-                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all ${
+                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all cursor-pointer ${
                       ativa
                         ? "border-teal-600 bg-teal-600 text-white font-bold"
                         : "border-teal-600 bg-white text-teal-600 hover:bg-teal-50"
@@ -107,9 +113,10 @@ function PainelFiltros({
                 const ativa = areasSelecionadas.includes(area);
                 return (
                   <button
+                    type="button"
                     key={area}
                     onClick={() => toggleArea(area)}
-                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all ${
+                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all cursor-pointer ${
                       ativa
                         ? "border-amber-700 bg-amber-700 text-white font-bold"
                         : "border-amber-700 bg-white text-amber-700 hover:bg-amber-50"
@@ -132,9 +139,10 @@ function PainelFiltros({
                 const ativa = componentesSelecionados.includes(componente);
                 return (
                   <button
+                    type="button"
                     key={componente}
                     onClick={() => toggleComponente(componente)}
-                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all ${
+                    className={`px-2 py-0.5 text-[10px] rounded-full border transition-all cursor-pointer ${
                       ativa
                         ? "border-indigo-700 bg-indigo-700 text-white font-bold"
                         : "border-indigo-700 bg-white text-indigo-700 hover:bg-indigo-50"
@@ -154,8 +162,9 @@ function PainelFiltros({
             </span>
 
             <button
+              type="button"
               onClick={toggleMetodologiaHibrida}
-              className={`px-2 py-0.5 text-[10px] rounded-full border transition-all ${
+              className={`px-2 py-0.5 text-[10px] rounded-full border transition-all cursor-pointer ${
                 metodologiaHibridaSelecionada
                   ? "border-purple-700 bg-purple-700 text-white font-bold"
                   : "border-purple-700 bg-white text-purple-700 hover:bg-purple-50"
@@ -167,6 +176,7 @@ function PainelFiltros({
 
           {temFiltroAtivo && (
             <button
+              type="button"
               onClick={limparFiltros}
               className="py-0.5 text-[10px] text-red-500 hover:underline bg-transparent border-none text-right cursor-pointer"
             >

@@ -8,8 +8,9 @@ import MapPage from "./pages/MapPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 
-// Layout com barra superior
+// Layout e Proteção de Rotas
 import MainLayout from "./layouts/MainLayout";
+import RotaPrivada from "./components/RotaPrivada";
 
 function App() {
   return (
@@ -18,8 +19,15 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Rota Administrativa (Acessada após o Login) */}
-      <Route path="/admin" element={<AdminPage />} />
+      {/* Rota Administrativa Protegida */}
+      <Route
+        path="/admin"
+        element={
+          <RotaPrivada>
+            <AdminPage />
+          </RotaPrivada>
+        }
+      />
 
       {/* Rotas do Sistema com cabeçalho (MainLayout) */}
       <Route element={<MainLayout />}>

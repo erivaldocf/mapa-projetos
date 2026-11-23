@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { cadastrarProjeto } from "../../services/api";
 
 export default function Step4({
   formData,
@@ -13,7 +14,7 @@ export default function Step4({
     e.preventDefault();
 
     if (!formData.concorda_lgpd) {
-      alert(
+      setErroMsg(
         "Você precisa declarar o consentimento da LGPD e ECA Digital para enviar.",
       );
       return;
@@ -53,6 +54,7 @@ export default function Step4({
         qtd_estudantes: Number(formData.qtd_estudantes) || 0,
         qtd_professores: Number(formData.qtd_professores) || 0,
         apresentacao_projeto: formData.apresentacao_projeto || "",
+        palavras_chave: formData.palavras_chave || "",
         objetivo: formData.objetivo || "",
         metodologia: formData.metodologia || "",
         metodologia_hibrida: Boolean(formData.metodologia_hibrida),
@@ -78,21 +80,7 @@ export default function Step4({
         link_projeto: formData.link_projeto || "",
       };
 
-      const response = await fetch("http://localhost:3001/api/projetos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Ocorreu um erro ao enviar os dados.",
-        );
-      }
-
+      await cadastrarProjeto(payload);
       onSuccess();
     } catch (err) {
       console.error("Erro ao salvar projeto:", err);
@@ -132,9 +120,10 @@ export default function Step4({
           <input
             type="checkbox"
             checked={formData.concorda_lgpd || false}
-            onChange={(e) =>
-              updateFormData({ concorda_lgpd: e.target.checked })
-            }
+            onChange={(e) => {
+              setErroMsg("");
+              updateFormData({ concorda_lgpd: e.target.checked });
+            }}
             required
             className="mt-0.5 w-4 h-4 rounded text-[#d97706] bg-white border-2 border-[#d97706] focus:ring-[#d97706] cursor-pointer"
           />

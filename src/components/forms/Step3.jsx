@@ -108,7 +108,7 @@ export default function Step3({
         />
       </div>
 
-      {/* Descrição do Projeto */}
+      {/* Apresentação do Projeto */}
       <div>
         <label className="block text-sm font-bold text-[#143021] mb-1.5">
           Apresentação do Projeto
@@ -120,6 +120,22 @@ export default function Step3({
             updateFormData({ apresentacao_projeto: e.target.value })
           }
           placeholder="Descreva de forma clara a proposta do projeto..."
+          required
+          className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
+        />
+      </div>
+
+      {/* Palavras-chave */}
+
+      <div>
+        <label className="block text-sm font-bold text-[#143021] mb-1.5">
+          Palavras-chave
+        </label>
+        <input
+          type="text"
+          value={formData.palavras_chave || ""}
+          onChange={(e) => updateFormData({ palavras_chave: e.target.value })}
+          placeholder="Ex: robótica, ensino, pesquisa"
           required
           className="w-full p-2.5 border-2 border-[#315740] rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm text-sm"
         />
@@ -225,7 +241,7 @@ export default function Step3({
         )}
       </div>
 
-      {/* 2. Situação do Projeto */}
+      {/* Situação do Projeto */}
       <div>
         <label className="block text-sm font-bold text-[#143021] mb-1.5">
           Situação do Projeto
@@ -251,7 +267,7 @@ export default function Step3({
         </div>
       </div>
 
-      {/* 3. Parceria ou Cooperação Interinstitucional */}
+      {/* Parceria ou Cooperação Interinstitucional */}
       <div className="space-y-2">
         <label className="block text-sm font-bold text-[#143021]">
           O projeto possui parceria ou cooperação interinstitucional?
@@ -302,7 +318,7 @@ export default function Step3({
         )}
       </div>
 
-      {/* 4. Financiamento */}
+      {/* Financiamento */}
       <div className="space-y-2">
         <label className="block text-sm font-bold text-[#143021]">
           O projeto possui financiamento?
@@ -353,7 +369,7 @@ export default function Step3({
         )}
       </div>
 
-      {/* 5. Produção Acadêmica / Científica */}
+      {/* Produção Acadêmica / Científica */}
       <div className="space-y-2">
         <label className="block text-sm font-bold text-[#143021]">
           O projeto possui alguma produção?

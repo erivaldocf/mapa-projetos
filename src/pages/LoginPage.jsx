@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import { loginComGoogle } from "../services/api";
 
 /**
  * Componente LoginPage
@@ -11,29 +12,12 @@ export default function LoginPage() {
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
 
-  // Função executada quando o usuário escolhe uma conta no Google
   const handleGoogleSuccess = async (credentialResponse) => {
     setCarregando(true);
     setMensagemErro("");
 
     try {
-      // Envia a credencial para o servidor Express (porta 3001)
-      const resposta = await fetch("http://localhost:3001/auth/google", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken: credentialResponse.credential,
-        }),
-      });
-
-      const dados = await resposta.json();
-
-      // Caso o e-mail não seja autorizado no banco de dados ou domínio
-      if (!resposta.ok) {
-        throw new Error(dados.error || "Acesso não autorizado.");
-      }
+      const dados = await loginComGoogle(credentialResponse.credential);
 
       // Guarda os dados da sessão no navegador
       localStorage.setItem("token_mapeamento", dados.token);
@@ -71,7 +55,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Mensagem de erro caso a conta não esteja na tabela de administradores */}
+        {/* Mensagem de erro */}
         {mensagemErro && (
           <div className="p-3.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-semibold leading-relaxed">
             ⚠️ {mensagemErro}

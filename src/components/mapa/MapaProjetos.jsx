@@ -18,6 +18,7 @@ import {
   obterCorDoPin,
   criarIconePin,
 } from "../../constants/dadosMapa";
+import { listarProjetosAprovados } from "../../services/api";
 
 // Componente auxiliar para ajustar o foco do mapa
 function ControladorDeFoco({
@@ -103,18 +104,13 @@ function MapaProjetos() {
       })
       .catch((err) => console.error("Erro ao carregar GeoJSON:", err));
 
-    // 2. Busca projetos e escolas cruzados da nossa API Backend
+    // 2. Busca projetos aprovados e escolas cruzados via serviço centralizado
     async function carregarDadosAPI() {
       setCarregando(true);
       try {
-        const response = await fetch("http://localhost:3001/api/projetos");
-        if (!response.ok) {
-          throw new Error("Erro ao buscar dados da API.");
-        }
+        const data = await listarProjetosAprovados();
 
-        const data = await response.json();
-
-        const listaFormatada = data
+        const listaFormatada = (data || [])
           .map((projeto) => {
             const escola = projeto.escolas;
             if (!escola) return null;
@@ -135,16 +131,27 @@ function MapaProjetos() {
 
               modalidade: projeto.modalidade || projeto.modalidade_ensino || "",
 
-              nome_projeto: projeto.nome_projeto || projeto.nome || "",
+              // Compatibiliza os nomes das colunas do PostgreSQL com o frontend
+              nome_projeto:
+                projeto.titulo_projeto ||
+                projeto.nome_projeto ||
+                projeto.nome ||
+                "",
               responsavel:
-                projeto.responsavel || projeto.nome_responsavel || "",
+                projeto.coordenador ||
+                projeto.responsavel ||
+                projeto.nome_responsavel ||
+                "",
               qtd_professores:
                 projeto.qtd_professores || projeto.quantidade_professores || "",
               qtd_estudantes:
                 projeto.qtd_estudantes || projeto.quantidade_estudantes || "",
               link_projeto: projeto.link_projeto || projeto.link || "",
               descricao_projeto:
-                projeto.descricao_projeto || projeto.descricao || "",
+                projeto.apresentacao_projeto ||
+                projeto.descricao_projeto ||
+                projeto.descricao ||
+                "",
               oferta_ensino:
                 projeto.oferta_ensino || projeto.ofertas_ensino || "",
 
@@ -180,7 +187,7 @@ function MapaProjetos() {
 
         setProjetosComCoordenadas(listaFormatada);
       } catch (err) {
-        console.error("Erro inesperado ao carregar API:", err);
+        console.error("Erro inesperado ao carregar API:", err.message);
       } finally {
         setCarregando(false);
       }
@@ -276,13 +283,12 @@ function MapaProjetos() {
 
   const checarEtapaMatch = (
     etapaProjeto,
+    anoSerieProjeto,
     filtroSelecionado,
-    dadosProjetoCompleto,
   ) => {
+    // Analisa apenas os campos de etapa e ano/série para evitar falsos positivos com INEP ou telefone
     const textoBase =
-      normalizarTexto(etapaProjeto) +
-      " " +
-      normalizarTexto(JSON.stringify(dadosProjetoCompleto || {}));
+      normalizarTexto(etapaProjeto) + " " + normalizarTexto(anoSerieProjeto);
 
     if (filtroSelecionado.includes("1º ao 5º")) {
       return (
@@ -346,7 +352,7 @@ function MapaProjetos() {
     const passaEtapa =
       etapasSelecionadas.length > 0 &&
       etapasSelecionadas.some((etapaFiltro) =>
-        checarEtapaMatch(item.etapa, etapaFiltro, item.dadosCompletosProjeto),
+        checarEtapaMatch(item.etapa_ensino, item.ano_serie, etapaFiltro),
       );
 
     const passaModalidade = contemTextoGenerico(

@@ -35,6 +35,7 @@ export const INITIAL_FORM_DATA = {
   qtd_estudantes: "",
   qtd_professores: "",
   apresentacao_projeto: "",
+  palavras_chave: "",
   objetivo: "",
   metodologia: "",
   metodologia_hibrida: false,

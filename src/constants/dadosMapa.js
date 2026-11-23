@@ -1,6 +1,6 @@
 import L from "leaflet";
 
-// Listas de Opções para os Filtros
+// Listas de Opções para os Filtros (alinhadas com formOptions.js)
 export const ETAPAS_ENSINO = [
   "Ensino Fundamental (1º ao 5º)",
   "Ensino Fundamental (6º ao 9º)",
@@ -8,10 +8,11 @@ export const ETAPAS_ENSINO = [
 ];
 
 export const MODALIDADES_ENSINO = [
+  "Regular",
   "Educação de Jovens e Adultos (EJA)",
   "Educação Profissional e Tecnológica (EPT)",
   "Educação Especial",
-  "Educação do Campo, Indígena e Quilombola",
+  "Educação do Campo, Educação Quilombola ou Educação Indígena",
   "Educação em Tempo Integral",
   "Educação a Distância (EaD)",
 ];
@@ -32,7 +33,7 @@ export const COMPONENTES_CURRICULARES = [
   "Biologia",
   "Química",
   "Física",
-  "Artes",
+  "Arte",
   "Educação Física",
   "Língua Inglesa",
   "Língua Espanhola",

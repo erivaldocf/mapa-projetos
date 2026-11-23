@@ -19,7 +19,6 @@ import {
 import bnccGeral from "../../data/bnccGeral.json";
 import bnccComputacao from "../../data/bnccComputacao.json";
 
-// Mapeia os dados para o formato aceito pelo react-select { value, label }
 const opcoesGeral = bnccGeral.map((item) => ({
   value: item.codigo,
   label: `${item.codigo} - ${item.descricao}`,
@@ -30,7 +29,6 @@ const opcoesComputacao = bnccComputacao.map((item) => ({
   label: `${item.codigo} - ${item.descricao}`,
 }));
 
-// Lista plana com todos os componentes padrões para verificação
 const COMPONENTES_PADRAO = Object.values(COMPONENTES_CURRICULARES).flat();
 
 export default function Step2({
@@ -78,13 +76,27 @@ export default function Step2({
 
     if (listaAtual.includes(valor)) {
       novaLista = listaAtual.filter((item) => item !== valor);
-      // Se desmarcar "Outro", limpa o texto digitado
       if (valor === "Outro") {
         if (campo === "disciplinas") setOutroComponente("");
         if (campo === "areas_conhecimento") setOutraArea("");
       }
     } else {
       novaLista = [...listaAtual, valor];
+    }
+
+    // Se alterou Etapa de Ensino, remove automaticamente os Anos/Séries que não pertencem às etapas ativas
+    if (campo === "etapa_ensino") {
+      const novosAnosPermitidos = novaLista.flatMap(
+        (etapa) => ANOS_POR_ETAPA[etapa] || [],
+      );
+      const anosAtualizados = (formData.ano_serie || []).filter((ano) =>
+        novosAnosPermitidos.includes(ano),
+      );
+      updateFormData({
+        etapa_ensino: novaLista,
+        ano_serie: anosAtualizados,
+      });
+      return;
     }
 
     updateFormData({ [campo]: novaLista });
@@ -97,7 +109,6 @@ export default function Step2({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Processa os componentes curriculares (mantém os padrões selecionados e adiciona o texto de "Outro")
     let componentesFinais = (formData.disciplinas || []).filter(
       (item) => item !== "Outro" && COMPONENTES_PADRAO.includes(item),
     );
@@ -108,7 +119,6 @@ export default function Step2({
       componentesFinais.push(outroComponente.trim());
     }
 
-    // Processa as áreas de conhecimento (mantém as padrão selecionadas e adiciona o texto de "Outro")
     let areasFinais = (formData.areas_conhecimento || []).filter(
       (item) => item !== "Outro" && AREAS_CONHECIMENTO.includes(item),
     );
@@ -120,14 +130,13 @@ export default function Step2({
     }
 
     updateFormData({
-      disciplinas: componentesFinais,
-      areas_conhecimento: areasFinais,
+      disciplinas: Array.from(new Set(componentesFinais)),
+      areas_conhecimento: Array.from(new Set(areasFinais)),
     });
 
     nextStep();
   };
 
-  // Prepara os valores selecionados de BNCC para o formato do React-Select
   const valoresGeralSelecionados = opcoesGeral.filter((op) =>
     (Array.isArray(formData.habilidades_bncc)
       ? formData.habilidades_bncc
@@ -405,7 +414,6 @@ export default function Step2({
           </label>
         </div>
 
-        {/* Input exibido somente quando "Outro" estiver marcado */}
         {(formData.disciplinas || []).includes("Outro") && (
           <div className="mt-2">
             <input
@@ -459,7 +467,6 @@ export default function Step2({
           </label>
         </div>
 
-        {/* Input exibido somente quando "Outro" estiver marcado */}
         {(formData.areas_conhecimento || []).includes("Outro") && (
           <div className="mt-2">
             <input

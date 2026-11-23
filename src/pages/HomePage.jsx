@@ -1,9 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Map, Lock } from "lucide-react";
+import { FileText } from "lucide-react";
 
 export default function HomePage() {
-  // Inicialização do hook de navegação
   const navigate = useNavigate();
 
   return (
@@ -50,7 +49,6 @@ export default function HomePage() {
                 onClick={() => navigate("/mapa")}
                 className="w-full flex items-center justify-center gap-2 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-xl transition text-xs tracking-wider uppercase cursor-pointer"
               >
-                {/*<Map className="w-4 h-4 text-slate-500" /> */}
                 <span>Visualizar Mapa</span>
               </button>
 
@@ -59,7 +57,6 @@ export default function HomePage() {
                 onClick={() => navigate("/login")}
                 className="w-full flex items-center justify-center gap-2 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-xl transition text-xs tracking-wider uppercase cursor-pointer"
               >
-                {/*<Lock className="w-4 h-4 text-slate-500" /> */}
                 <span>Login administrativo</span>
               </button>
             </div>

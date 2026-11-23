@@ -8,13 +8,18 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
   const [erroEmail, setErroEmail] = useState("");
   const [erroTelefone, setErroTelefone] = useState("");
 
-  // Expressões Regulares de Validação
+  // Expressões Regulares de Validação (aceita celular com 9 dígitos ou fixo com 8 dígitos)
   const EMAIL_INSTITUCIONAL_REGEX = /^[a-zA-Z0-9._%+-]+@educar\.rn\.gov\.br$/i;
-  const TELEFONE_REGEX = /^\(\d{2}\) 9\d{4}-\d{4}$/;
+  const TELEFONE_REGEX = /^\(\d{2}\) \d{4,5}-\d{4}$/;
 
-  // 1. Filtra as escolas pertencentes à DIREC selecionada
+  const normalizar = (texto) =>
+    texto ? String(texto).trim().toUpperCase() : "";
+
+  // 1. Filtra as escolas pertencentes à DIREC selecionada (ignorando maiúsculas/espaços)
   const escolasDaDirec = formData.direc
-    ? escolas.filter((item) => item.direc === formData.direc)
+    ? escolas.filter(
+        (item) => normalizar(item.direc) === normalizar(formData.direc),
+      )
     : [];
 
   // 2. Extrai a lista de municípios únicos disponíveis dentro da DIREC selecionada
@@ -26,7 +31,9 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
 
   // 3. Filtra as escolas pertencentes ao Município selecionado
   const escolasFiltradas = formData.municipio
-    ? escolasDaDirec.filter((item) => item.municipio === formData.municipio)
+    ? escolasDaDirec.filter(
+        (item) => normalizar(item.municipio) === normalizar(formData.municipio),
+      )
     : [];
 
   // Validação centralizada ao submeter a etapa
@@ -35,7 +42,6 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
 
     let temErro = false;
 
-    // Validação da Escola
     if (!formData.inep_escola) {
       setErroEscola(true);
       temErro = true;
@@ -43,15 +49,15 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
       setErroEscola(false);
     }
 
-    // Validação do Telefone
     if (!formData.telefone || !TELEFONE_REGEX.test(formData.telefone)) {
-      setErroTelefone("Informe um telefone válido no formato (00) 90000-0000.");
+      setErroTelefone(
+        "Informe um telefone válido no formato (00) 90000-0000 ou (00) 0000-0000.",
+      );
       temErro = true;
     } else {
       setErroTelefone("");
     }
 
-    // Validação do E-mail Institucional
     if (
       !formData.email_institucional ||
       !EMAIL_INSTITUCIONAL_REGEX.test(formData.email_institucional)
@@ -64,14 +70,11 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
       setErroEmail("");
     }
 
-    // Se houver algum erro, interrompe a navegação
     if (temErro) return;
 
-    // Se estiver tudo correto, avança para o próximo passo
     nextStep();
   };
 
-  // Trata a alteração da DIREC (limpa Município e Escola)
   const handleDirecChange = (e) => {
     updateFormData({
       direc: e.target.value,
@@ -81,7 +84,6 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
     });
   };
 
-  // Trata a alteração do Município (limpa Escola)
   const handleMunicipioChange = (e) => {
     updateFormData({
       municipio: e.target.value,
@@ -90,7 +92,6 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
     });
   };
 
-  // Trata a seleção da Escola (guarda o INEP e o Nome internamente)
   const handleEscolaChange = (option) => {
     if (!option) {
       setErroEscola(true);
@@ -114,20 +115,20 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
   };
 
   /**
-   * Formata uma string de caracteres numéricos no formato de telefone celular brasileiro.
-   * Exemplo de entrada: "84999999999" -> Saída: "(84) 99999-9999"
+   * Formata telefone fixo (10 dígitos) ou celular (11 dígitos) automaticamente.
    */
   const formatarTelefone = (valor) => {
     if (!valor) return "";
 
-    // 1. Remove qualquer caractere que não seja número
-    const apenasNumeros = valor.replace(/\D/g, "");
+    const apenasNumeros = valor.replace(/\D/g, "").slice(0, 11);
 
-    // 2. Limita a 11 dígitos (2 do DDD + 9 do número celular)
-    const apenasNumerosLimitados = apenasNumeros.slice(0, 11);
+    if (apenasNumeros.length <= 10) {
+      return apenasNumeros
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+    }
 
-    // 3. Aplica a máscara (XX) 9XXXX-XXXX
-    return apenasNumerosLimitados
+    return apenasNumeros
       .replace(/^(\d{2})(\d)/, "($1) $2")
       .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
   };
@@ -209,7 +210,7 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
                   }))
                   .find(
                     (op) => String(op.value) === String(formData.inep_escola),
-                  )
+                  ) || null
               : null
           }
           onChange={handleEscolaChange}
@@ -271,7 +272,7 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
       {/* E-mail Institucional */}
       <div>
         <label className="block text-sm font-bold text-[#143021] mb-1.5">
-          E-mail Institucional da Escola(@educar.rn.gov.br)
+          E-mail Institucional da Escola (@educar.rn.gov.br)
         </label>
         <input
           type="email"
@@ -325,8 +326,8 @@ export default function Step1({ formData, updateFormData, escolas, nextStep }) {
           placeholder="(84) 99999-9999"
           required
           maxLength={15}
-          pattern="\(\d{2}\) 9\d{4}-\d{4}"
-          title="Insira o telefone no formato correto: (00) 90000-0000"
+          pattern="\(\d{2}\) \d{4,5}-\d{4}"
+          title="Insira o telefone no formato (00) 90000-0000 ou (00) 0000-0000"
           className={`w-full p-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#244231] focus:border-[#244231] bg-white text-gray-900 placeholder-gray-500 font-semibold shadow-sm ${
             erroTelefone ? "border-red-600" : "border-[#315740]"
           }`}
